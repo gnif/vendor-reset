@@ -1,4 +1,14 @@
-obj-m += vendor-reset.o
+obj-m          := vendor-reset.o
+vendor-reset-y := src/vendor-reset.o
+
+vendor-reset-y += src/amd/vega10.o
+vendor-reset-y += src/amd/vega20.o
+vendor-reset-y += src/amd/navi10.o
+
+
+ccflags-y := -I$(src)/src
+ccflags-y += -I$(src)/include
+
 USER  := $(shell whoami)
 KVER ?= $(shell uname -r)
 KDIR ?= /lib/modules/$(KVER)/build

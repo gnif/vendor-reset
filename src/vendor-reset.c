@@ -22,8 +22,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/highmem.h>
 #include <linux/pci.h>
 
+#include "vendor-reset-dev.h"
 #include "vendor-reset.h"
-#include "include/vendor-reset.h"
 
 #include "device-db.h"
 
@@ -43,25 +43,23 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
   if (!pcidev)
     return -ENODEV;
 
-  while(entry->type != VENDOR_RESET_TYPE_INVALID)
+  for(entry = vendor_reset_devices; entry->vendor; ++entry)
   {
-    if (entry->type != VENDOR_RESET_TYPE_PCI || entry->vendor != pcidev->vendor)
+    if (entry->vendor != pcidev->vendor)
       continue;
 
     if (entry->device == VENDOR_RESET_DEVICE_ALL ||
         entry->device == pcidev->device)
       break;
-
-    ++entry;
   }
 
-  if (entry->type == VENDOR_RESET_TYPE_INVALID)
+  if (!entry->vendor)
   {
     ret = -EOPNOTSUPP;
     goto err;
   }
 
-  ret = entry->ops.reset(pcidev);
+  ret = entry->ops->reset(pcidev);
 
 err:
   pci_dev_put(pcidev);

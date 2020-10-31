@@ -16,9 +16,14 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-static struct vendor_reset_device vendor_reset_devices[] =
+#include "vendor-reset-dev.h"
+
+static int amd_vega20_reset(struct pci_dev * dev)
 {
-  {
-    .type = VENDOR_RESET_TYPE_INVALID
-  }
+  return 0;
+}
+
+const struct vendor_reset_ops amd_vega20_ops =
+{
+  .reset = amd_vega20_reset
 };

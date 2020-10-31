@@ -16,11 +16,8 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#ifndef _H_VENDOR_RESET
-#define _H_VENDOR_RESET
-
-#define VENDOR_RESET_TYPE_INVALID 0x0
-#define VENDOR_RESET_TYPE_PCI     0x1
+#ifndef _H_VENDOR_RESET_DEV
+#define _H_VENDOR_RESET_DEV
 
 #define VENDOR_RESET_DEVICE_ALL ((unsigned int)-1)
 
@@ -34,9 +31,6 @@ struct vendor_reset_ops
 
 struct vendor_reset_device
 {
-  /* one of VENDOR_RESET_TYPE_* */
-  unsigned int type;
-
   /* the vendor ID */
   unsigned int vendor;
 
@@ -45,7 +39,7 @@ struct vendor_reset_device
   unsigned int device;
 
   /* the reset operations */
-  struct vendor_reset_ops ops;
+  const struct vendor_reset_ops * ops;
 };
 
 #endif
