@@ -13,7 +13,6 @@ userspace:
 	gcc userspace/vendor-reset.c -Wall -Werror -g -Og -o userspace/vendor-reset
 
 load: all
-	grep -q '^uio'   /proc/modules || sudo modprobe uio
 	grep -q '^vendor-reset' /proc/modules && sudo rmmod vendor-reset || true
 	sudo insmod ./vendor-reset.ko
 
