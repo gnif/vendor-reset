@@ -57,7 +57,7 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 
   if (entry->type == VENDOR_RESET_TYPE_INVALID)
   {
-    ret = -ENODEV;
+    ret = -EOPNOTSUPP;
     goto err;
   }
 
