@@ -18,42 +18,42 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "amd/amd.h"
 
-static struct vendor_reset_device vendor_reset_devices[] =
-{
-  /* AMD Vega 10 */
-  { PCI_VENDOR_ID_ATI, 0x6860, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x6861, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x6862, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x6863, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x6864, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x6867, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x6868, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x6869, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x686a, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x686b, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x686c, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x686d, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x686e, &amd_vega10_ops },
-  { PCI_VENDOR_ID_ATI, 0x686f, &amd_vega10_ops },
+static struct vendor_reset_cfg vendor_reset_devices[] =
+    {
+        /* AMD Vega 10 */
+        {PCI_VENDOR_ID_ATI, 0x6860, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6861, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6862, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6863, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6864, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6867, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6868, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6869, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x686a, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x686b, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x686c, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x686d, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x686e, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x686f, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x687f, &amd_vega10_ops},
 
-  /* AMD Vega 20 */
-  { PCI_VENDOR_ID_ATI, 0x66a0, &amd_vega20_ops },
-  { PCI_VENDOR_ID_ATI, 0x66a1, &amd_vega20_ops },
-  { PCI_VENDOR_ID_ATI, 0x66a2, &amd_vega20_ops },
-  { PCI_VENDOR_ID_ATI, 0x66a3, &amd_vega20_ops },
-  { PCI_VENDOR_ID_ATI, 0x66a4, &amd_vega20_ops },
-  { PCI_VENDOR_ID_ATI, 0x66a7, &amd_vega20_ops },
-  { PCI_VENDOR_ID_ATI, 0x66af, &amd_vega20_ops },
+        /* AMD Vega 20 */
+        {PCI_VENDOR_ID_ATI, 0x66a0, &amd_vega20_ops},
+        {PCI_VENDOR_ID_ATI, 0x66a1, &amd_vega20_ops},
+        {PCI_VENDOR_ID_ATI, 0x66a2, &amd_vega20_ops},
+        {PCI_VENDOR_ID_ATI, 0x66a3, &amd_vega20_ops},
+        {PCI_VENDOR_ID_ATI, 0x66a4, &amd_vega20_ops},
+        {PCI_VENDOR_ID_ATI, 0x66a7, &amd_vega20_ops},
+        {PCI_VENDOR_ID_ATI, 0x66af, &amd_vega20_ops},
 
-  /* AMD Navi 10 */
-  { PCI_VENDOR_ID_ATI, 0x7310, &amd_navi10_ops },
-  { PCI_VENDOR_ID_ATI, 0x7312, &amd_navi10_ops },
-  { PCI_VENDOR_ID_ATI, 0x7318, &amd_navi10_ops },
-  { PCI_VENDOR_ID_ATI, 0x7319, &amd_navi10_ops },
-  { PCI_VENDOR_ID_ATI, 0x731a, &amd_navi10_ops },
-  { PCI_VENDOR_ID_ATI, 0x731b, &amd_navi10_ops },
-  { PCI_VENDOR_ID_ATI, 0x731e, &amd_navi10_ops },
-  { PCI_VENDOR_ID_ATI, 0x731f, &amd_navi10_ops },
+        /* AMD Navi 10 */
+        {PCI_VENDOR_ID_ATI, 0x7310, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x7312, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x7318, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x7319, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x731a, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x731b, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x731e, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x731f, &amd_navi10_ops},
 
-  { 0 }
-};
+        {0}};

@@ -16,14 +16,18 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
+#include "soc15_common.h"
 #include "vendor-reset-dev.h"
+#include "common.h"
 
-static int amd_vega10_reset(struct pci_dev * dev)
+static int amd_vega10_reset(struct vendor_reset_dev *dev)
 {
-  return 0;
+
+	return 0;
 }
 
-const struct vendor_reset_ops amd_vega10_ops =
-{
-  .reset = amd_vega10_reset
+const struct vendor_reset_ops amd_vega10_ops = {
+	.pre_reset = amd_common_pre_reset,
+	.reset = amd_vega10_reset,
+	.post_reset = amd_common_post_reset,
 };

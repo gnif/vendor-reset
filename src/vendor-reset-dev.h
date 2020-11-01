@@ -23,13 +23,26 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <linux/pci.h>
 
-struct vendor_reset_ops
+struct vendor_reset_dev
 {
-  /* the reset method for the device at the specified address */
-  int (*reset)(struct pci_dev *dev);
+  struct pci_dev *pdev;
+
+  int reset_ret;
+
+  void *vendor_private;
 };
 
-struct vendor_reset_device
+struct vendor_reset_ops
+{
+  /* any pre-reset ops to do, i.e., common code between devices */
+  int (*pre_reset)(struct vendor_reset_dev *);
+  /* the reset method for the device at the specified address */
+  int (*reset)(struct vendor_reset_dev *);
+  /* any post-reset ops to do, i.e., common code between devices */
+  int (*post_reset)(struct vendor_reset_dev *);
+};
+
+struct vendor_reset_cfg
 {
   /* the vendor ID */
   unsigned int vendor;

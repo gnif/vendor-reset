@@ -32,9 +32,10 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 {
   struct vendor_reset_ioctl dev;
-  struct vendor_reset_device *entry = vendor_reset_devices;
+  struct vendor_reset_cfg *entry = vendor_reset_devices;
   struct pci_dev * pcidev;
   int ret;
+  struct vendor_reset_dev vdev;
 
   if (copy_from_user(&dev, (void __user *)arg, sizeof(dev)))
     return -EFAULT;
@@ -42,6 +43,8 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
   pcidev = pci_get_domain_bus_and_slot(dev.domain, dev.bus, dev.devfn);
   if (!pcidev)
     return -ENODEV;
+
+  pci_printk(KERN_INFO, pcidev, "Found device\n");
 
   for(entry = vendor_reset_devices; entry->vendor; ++entry)
   {
@@ -59,7 +62,38 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
     goto err;
   }
 
-  ret = entry->ops->reset(pcidev);
+  vdev.pdev = pcidev;
+
+  /* we probably always want to lock the device */
+  if (!pci_cfg_access_trylock(pcidev))
+    goto err;
+  else
+  {
+    if (!device_trylock(&pcidev->dev))
+    {
+      pci_cfg_access_unlock(pcidev);
+      goto err;
+    }
+  }
+
+  if (entry->ops->pre_reset)
+  {
+    ret = entry->ops->pre_reset(&vdev);
+    if (ret)
+      goto unlock;
+  }
+
+  /* expose return code to cleanup */
+  ret = vdev.reset_ret = entry->ops->reset(&vdev);
+  if (ret)
+    pci_warn(pcidev, "Failed to reset device\n");
+
+  if (entry->ops->post_reset)
+    ret = entry->ops->post_reset(&vdev);
+
+unlock:
+  device_unlock(&pcidev->dev);
+  pci_cfg_access_unlock(pcidev);
 
 err:
   pci_dev_put(pcidev);

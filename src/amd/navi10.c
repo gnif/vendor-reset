@@ -18,7 +18,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "vendor-reset-dev.h"
 
-static int amd_navi10_reset(struct pci_dev * dev)
+static int amd_navi10_reset(struct vendor_reset_dev *dev)
 {
   return 0;
 }
