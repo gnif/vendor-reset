@@ -158,3 +158,4 @@ module_exit(vendor_reset_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Geoffrey McRae <geoff@hostfission.com>");
+MODULE_AUTHOR("Adam Madsen <adam@ajmadsen.com>");
