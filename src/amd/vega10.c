@@ -134,12 +134,12 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   for (timeout = 100000; timeout; --timeout)
   {
     sol = RREG32(mmMP0_SMN_C2PMSG_81);
-    if (sol != 0xFFFFFFFF)
+    if (sol != 0xFFFFFFFF && sol != 0)
       break;
     udelay(1);
   }
 
-  if (sol == 0xFFFFFFFF)
+  if (!sol)
   {
     pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
     return -EINVAL;

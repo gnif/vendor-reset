@@ -35,6 +35,7 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
     return -ENOMEM;
 
   dev->vendor_private = priv;
+  priv->vdev = dev;
 
   spin_lock_init(&priv->pcie_lock);
   spin_lock_init(&priv->reg_lock);
@@ -80,6 +81,9 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
   if (!dev->reset_ret)
     pci_set_power_state(pdev, PCI_D3hot);
 
+  kzfree(priv);
+  dev->vendor_private = NULL;
+
   return 0;
 }
 
@@ -96,7 +100,7 @@ int smum_send_msg_to_smc(struct amd_fake_dev *adev, uint16_t msg, uint32_t *resp
        --timeout)
     udelay(1);
   if ((ret = RREG32(mmMP1_SMN_C2PMSG_90)) != 0x1)
-    pci_info(to_vendor_reset_dev(adev->private)->pdev, "SMU error 0x%x (line %d)\n",
+    pci_info(adev->private->vdev->pdev, "SMU error 0x%x (line %d)\n",
              ret, __LINE__);
 
   mutex_unlock(&adev->private->smu_lock);

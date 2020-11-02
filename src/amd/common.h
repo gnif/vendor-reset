@@ -163,6 +163,7 @@ struct amd_vendor_private
 {
   u16 cfg;
 
+  struct vendor_reset_dev *vdev;
   struct pci_saved_state *saved_state;
   struct amd_fake_dev adev;
 
@@ -175,7 +176,6 @@ struct amd_vendor_private
   struct mutex smu_lock;
 };
 
-#define to_vendor_reset_dev(priv) container_of((void *)priv, struct vendor_reset_dev, vendor_private)
 #define amd_private(vdev) ((struct amd_vendor_private *)(vdev->vendor_private))
 
 int amd_common_pre_reset(struct vendor_reset_dev *);
