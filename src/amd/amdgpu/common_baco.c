@@ -23,6 +23,8 @@
 
 #include <linux/types.h>
 #include <linux/delay.h>
+#include "soc15_common.h"
+#include "vega10_inc.h"
 #include "common_baco.h"
 #include "common.h"
 
@@ -119,4 +121,18 @@ bool soc15_baco_program_registers(struct amd_fake_dev *adev,
 	}
 
 	return true;
+}
+
+int smu9_baco_get_state(struct amd_fake_dev *adev, enum BACO_STATE *state)
+{
+	uint32_t reg;
+
+	reg = RREG32_SOC15(NBIF, 0, mmBACO_CNTL);
+
+	if (reg & BACO_CNTL__BACO_MODE_MASK)
+		/* gfx has already entered BACO state */
+		*state = BACO_STATE_IN;
+	else
+		*state = BACO_STATE_OUT;
+	return 0;
 }

@@ -144,14 +144,6 @@ enum amd_hw_ip_block_type
 #define HWIP_MAX_INSTANCE 8
 /* end from amdgpu.h */
 
-/* from hwmgr.h */
-enum BACO_STATE
-{
-  BACO_STATE_OUT = 0,
-  BACO_STATE_IN,
-};
-/* end from hwmgr.h */
-
 struct amd_fake_dev
 {
   uint32_t *reg_offset[MAX_HWIP][HWIP_MAX_INSTANCE];

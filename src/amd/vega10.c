@@ -128,6 +128,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   struct amd_fake_dev *adev;
   int ret, timeout;
   u32 sol, smu_resp, mp1_intr, psp_bl_ready;
+  enum BACO_STATE baco_state;
 
   priv->adev = (struct amd_fake_dev){
       .dev = &dev->pdev->dev,
@@ -156,22 +157,31 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
               MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
              MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT;
   psp_bl_ready = !!(RREG32(mmMP0_SMN_C2PMSG_35) & 0x80000000L);
+  smu9_baco_get_state(adev, &baco_state);
   pci_info(
       dev->pdev,
-      "Vega10: SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s\n",
+      "Vega10: SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s, baco? %s\n",
       smu_resp, sol, mp1_intr ? "yes" : "no",
-      psp_bl_ready ? "yes" : "no");
+      psp_bl_ready ? "yes" : "no",
+      baco_state == BACO_STATE_IN ? "on" : "off");
 
-  if (sol == ~1L)
+  if (sol == ~1L && baco_state != BACO_STATE_IN)
   {
     pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
     return -EINVAL;
   }
 
-  pci_info(dev->pdev, "Vega10: Entering BACO\n");
-  ret = vega10_baco_set_state(adev, BACO_STATE_IN);
-  if (ret)
-    return ret;
+  /* if there's no sign of life we usually can't reset */
+  if (!sol)
+    return 0;
+
+  if (baco_state == BACO_STATE_OUT)
+  {
+    pci_info(dev->pdev, "Vega10: Entering BACO\n");
+    ret = vega10_baco_set_state(adev, BACO_STATE_IN);
+    if (ret)
+      return ret;
+  }
 
   pci_info(dev->pdev, "Vega10: Exiting BACO\n");
   ret = vega10_baco_set_state(adev, BACO_STATE_OUT);

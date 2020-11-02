@@ -55,6 +55,14 @@ struct soc15_baco_cmd_entry
 	uint32_t val;
 };
 
+/* from hwmgr.h */
+enum BACO_STATE
+{
+	BACO_STATE_OUT = 0,
+	BACO_STATE_IN,
+};
+/* end from hwmgr.h */
+
 struct amd_fake_dev;
 
 extern bool baco_program_registers(struct amd_fake_dev *adev,
@@ -63,4 +71,6 @@ extern bool baco_program_registers(struct amd_fake_dev *adev,
 extern bool soc15_baco_program_registers(struct amd_fake_dev *adev,
 																				 const struct soc15_baco_cmd_entry *entry,
 																				 const u32 array_size);
+extern int smu9_baco_get_state(struct amd_fake_dev *adev, enum BACO_STATE *state);
+
 #endif
