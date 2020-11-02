@@ -50,7 +50,7 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
 
 const struct vendor_reset_ops amd_navi10_ops =
 {
-	.pre_reset = amd_common_pre_reset,
+  .pre_reset = amd_common_pre_reset,
   .reset = amd_navi10_reset,
-	.post_reset = amd_common_post_reset,
+  .post_reset = amd_common_post_reset,
 };
