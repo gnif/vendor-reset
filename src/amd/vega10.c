@@ -141,7 +141,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   /* it's important we wait for the SOC to be ready */
   for (timeout = 100000; timeout; --timeout)
   {
-    sol = RREG32(mmMP0_SMN_C2PMSG_81);
+    sol = RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_81);
     if (sol != 0xFFFFFFFF && sol != 0)
       break;
     udelay(1);
@@ -150,7 +150,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   pci_info(dev->pdev, "Vega10: bus reset disabled? %s\n", (dev->pdev->dev_flags & PCI_DEV_FLAGS_NO_BUS_RESET) ? "yes" : "no");
 
   /* collect some info for logging for now */
-  smu_resp = RREG32(mmMP1_SMN_C2PMSG_90);
+  smu_resp = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
   mp1_intr = (RREG32_PCIE(MP1_Public |
                           (smnMP1_FIRMWARE_FLAGS & 0xffffffff)) &
               MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
@@ -162,7 +162,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
       smu_resp, sol, mp1_intr ? "yes" : "no",
       psp_bl_ready ? "yes" : "no");
 
-  if (!sol)
+  if (sol == ~1L)
   {
     pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
     return -EINVAL;

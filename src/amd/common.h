@@ -182,5 +182,6 @@ int amd_common_pre_reset(struct vendor_reset_dev *);
 int amd_common_post_reset(struct vendor_reset_dev *);
 
 int smum_send_msg_to_smc(struct amd_fake_dev *adev, uint16_t msg, uint32_t *resp);
+int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg, uint32_t parameter, uint32_t *resp);
 
 #endif

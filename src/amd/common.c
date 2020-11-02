@@ -22,6 +22,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/delay.h>
 #include <linux/printk.h>
 #include "vendor-reset-dev.h"
+#include "soc15_common.h"
+#include "soc15.h"
 #include "common.h"
 
 int amd_common_pre_reset(struct vendor_reset_dev *dev)
@@ -93,22 +95,58 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
   return 0;
 }
 
-int smum_send_msg_to_smc(struct amd_fake_dev *adev, uint16_t msg, uint32_t *resp)
+static int smu_wait(struct amd_fake_dev *adev)
 {
-  int ret = 0;
-  u32 timeout;
-
-  mutex_lock(&adev->private->smu_lock);
+  u32 ret;
+  int timeout;
 
   for (timeout = 100000;
        timeout &&
-       (RREG32(mmMP1_SMN_C2PMSG_90) & MP1_C2PMSG_90__CONTENT_MASK) == 0;
+       (RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90) & MP1_C2PMSG_90__CONTENT_MASK) == 0;
        --timeout)
     udelay(1);
-  if ((ret = RREG32(mmMP1_SMN_C2PMSG_90)) != 0x1)
-    pci_info(adev->private->vdev->pdev, "SMU error 0x%x (line %d)\n",
-             ret, __LINE__);
+  if ((ret = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90)) != 0x1)
+    pci_info(adev->private->vdev->pdev, "SMU error 0x%x\n", ret);
 
+  return ret;
+}
+
+int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg, uint32_t parameter, uint32_t *resp)
+{
+  int ret = 0;
+
+  mutex_lock(&adev->private->smu_lock);
+
+  ret = smu_wait(adev);
+  if (ret != 0x1)
+  {
+    ret = -ETIMEDOUT;
+    goto out;
+  }
+
+  WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
+  WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82, parameter);
+
+  WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_66, msg);
+
+  ret = smu_wait(adev);
+  if (ret != 0x01)
+  {
+    pci_err(adev->private->vdev->pdev, "Failed to send message 0x%x: return 0x%x\n", msg, ret);
+    goto out;
+  }
+
+  if (resp)
+    *resp = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82);
+
+  ret = ret != 0x01;
+
+out:
   mutex_unlock(&adev->private->smu_lock);
-  return ret != 0x1;
+  return ret;
+}
+
+int smum_send_msg_to_smc(struct amd_fake_dev *adev, uint16_t msg, uint32_t *resp)
+{
+  return smum_send_msg_to_smc_with_parameter(adev, msg, 0, resp);
 }
