@@ -18,12 +18,39 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "vendor-reset-dev.h"
 
+#include "common.h"
+#include "amdgpu_discovery.h"
+#include "nv.h"
+
 static int amd_navi10_reset(struct vendor_reset_dev *dev)
 {
+  struct amd_vendor_private *priv = amd_private(dev);
+  struct amd_fake_dev *adev;
+  int ret;
+
+  priv->adev = (struct amd_fake_dev){
+      .dev = &dev->pdev->dev,
+      .private = priv,
+  };
+  adev = &priv->adev;
+
+  ret = amdgpu_discovery_reg_base_init(adev);
+  if (ret < 0)
+  {
+    pci_info(dev->pdev,
+        "amdgpu_discovery_reg_base_init failed, using legacy method");
+    navi10_reg_base_init(adev);
+  }
+
+  if (adev->mman.discovery_bin)
+    amdgpu_discovery_fini(adev);
+
   return 0;
 }
 
 const struct vendor_reset_ops amd_navi10_ops =
 {
-  .reset = amd_navi10_reset
+	.pre_reset = amd_common_pre_reset,
+  .reset = amd_navi10_reset,
+	.post_reset = amd_common_post_reset,
 };

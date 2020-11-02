@@ -88,6 +88,11 @@ Place, Suite 330, Boston, MA 02111-1307 USA
     __tmp_read;                                                 \
   })
 
+/* KIQ is only used for SRIOV accesses, we are not targetting these devices so
+ * we can safely just wrap the defines */
+#define WREG32_NO_KIQ WREG32
+#define RREG32_NO_KIQ RREG32
+
 /* from smu_cm.c */
 /*
  * Although these are defined in each ASIC's specific header file.
@@ -144,9 +149,16 @@ enum amd_hw_ip_block_type
 #define HWIP_MAX_INSTANCE 8
 /* end from amdgpu.h */
 
+#include "amdgpu_gfx.h"
+#include "amdgpu_ttm.h"
+#include "drm/drm_print.h"
+
 struct amd_fake_dev
 {
   uint32_t *reg_offset[MAX_HWIP][HWIP_MAX_INSTANCE];
+  struct amdgpu_gfx  gfx;
+  struct amdgpu_mman mman;
+
   struct device *dev;
   struct amd_vendor_private *private;
 };
