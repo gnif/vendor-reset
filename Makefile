@@ -6,7 +6,7 @@ all:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 clean:
-		$(MAKE) -C $(KDIR) M=$(PWD) clean
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
 
 load: all
 	grep -q '^vendor_reset' /proc/modules && sudo rmmod vendor_reset || true
