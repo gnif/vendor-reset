@@ -83,6 +83,7 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
 
   kzfree(priv);
   dev->vendor_private = NULL;
+  mutex_destroy(&priv->smu_lock);
 
   return 0;
 }
