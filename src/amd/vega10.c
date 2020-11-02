@@ -28,6 +28,14 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "common.h"
 #include "common_baco.h"
 
+/* MP Apertures, from smu9_smumgr.c */
+#define MP0_Public 0x03800000
+#define MP0_SRAM 0x03900000
+#define MP1_Public 0x03b00000
+#define MP1_SRAM 0x03c00004
+
+#define smnMP1_FIRMWARE_FLAGS 0x3010028
+
 extern int vega10_reg_base_init(struct amd_fake_dev *adev);
 
 /* drivers/gpu/drm/amd/powerplay/hwmgr/vega10_baco.c */
@@ -119,7 +127,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   struct amd_vendor_private *priv = amd_private(dev);
   struct amd_fake_dev *adev;
   int ret, timeout;
-  u32 sol;
+  u32 sol, smu_resp, mp1_intr, psp_bl_ready;
 
   priv->adev = (struct amd_fake_dev){
       .dev = &dev->pdev->dev,
@@ -139,11 +147,26 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     udelay(1);
   }
 
-  if (!sol)
-  {
-    pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
-    return -EINVAL;
-  }
+  pci_info(dev->pdev, "Vega10: bus reset disabled? %s\n", (dev->pdev->dev_flags & PCI_DEV_FLAGS_NO_BUS_RESET) ? "yes" : "no");
+
+  /* collect some info for logging for now */
+  smu_resp = RREG32(mmMP1_SMN_C2PMSG_90);
+  mp1_intr = (RREG32_PCIE(MP1_Public |
+                          (smnMP1_FIRMWARE_FLAGS & 0xffffffff)) &
+              MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
+             MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT;
+  psp_bl_ready = !!(RREG32(mmMP0_SMN_C2PMSG_35) & 0x80000000L);
+  pci_info(
+      dev->pdev,
+      "Vega10: SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s\n",
+      smu_resp, sol, mp1_intr ? "yes" : "no",
+      psp_bl_ready ? "yes" : "no");
+
+  // if (!sol)
+  // {
+  //   pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
+  //   return -EINVAL;
+  // }
 
   pci_info(dev->pdev, "Vega10: Entering BACO\n");
   ret = vega10_baco_set_state(adev, BACO_STATE_IN);
