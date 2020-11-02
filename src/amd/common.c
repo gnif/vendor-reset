@@ -1,6 +1,7 @@
 /*
 Vendor Reset - Vendor Specific Reset
 Copyright (C) 2020 Geoffrey McRae <geoff@hostfission.com>
+Copyright (C) 2020 Adam Madsen <adam@ajmadsen.com>
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,6 +19,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <linux/mm.h>
 #include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/printk.h>
 #include "vendor-reset-dev.h"
 #include "common.h"
 
@@ -25,6 +28,7 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
 {
   struct amd_vendor_private *priv;
   struct pci_dev *pdev = dev->pdev;
+  int ret;
 
   priv = kzalloc(sizeof *priv, GFP_KERNEL);
   if (!priv)
@@ -33,6 +37,18 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
   dev->vendor_private = priv;
 
   spin_lock_init(&priv->pcie_lock);
+  spin_lock_init(&priv->reg_lock);
+  mutex_init(&priv->smu_lock);
+
+  priv->mmio_base = pci_resource_start(pdev, 5);
+  priv->mmio_size = pci_resource_len(pdev, 5);
+  priv->mmio = ioremap(priv->mmio_base, priv->mmio_size);
+  if (!priv->mmio)
+  {
+    pci_err(pdev, "Could not mmap device\n");
+    ret = -ENOMEM;
+    goto err_free;
+  }
 
   pci_set_power_state(pdev, PCI_D0);
   pci_clear_master(pdev);
@@ -42,6 +58,10 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
   pci_write_config_word(pdev, PCI_COMMAND, priv->cfg | PCI_COMMAND_MEMORY | PCI_COMMAND_INTX_DISABLE);
 
   return 0;
+
+err_free:
+  kfree(priv);
+  return ret;
 }
 
 int amd_common_post_reset(struct vendor_reset_dev *dev)
@@ -61,4 +81,24 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
     pci_set_power_state(pdev, PCI_D3hot);
 
   return 0;
+}
+
+int smum_send_msg_to_smc(struct amd_fake_dev *adev, uint16_t msg, uint32_t *resp)
+{
+  int ret = 0;
+  u32 timeout;
+
+  mutex_lock(&adev->private->smu_lock);
+
+  for (timeout = 100000;
+       timeout &&
+       (RREG32(mmMP1_SMN_C2PMSG_90) & MP1_C2PMSG_90__CONTENT_MASK) == 0;
+       --timeout)
+    udelay(1);
+  if ((ret = RREG32(mmMP1_SMN_C2PMSG_90)) != 0x1)
+    pci_info(to_vendor_reset_dev(adev->private)->pdev, "SMU error 0x%x (line %d)\n",
+             ret, __LINE__);
+
+  mutex_unlock(&adev->private->smu_lock);
+  return ret != 0x1;
 }

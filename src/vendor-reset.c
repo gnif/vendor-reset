@@ -1,6 +1,7 @@
 /*
 Vendor Reset - Vendor Specific Reset
 Copyright (C) 2020 Geoffrey McRae <geoff@hostfission.com>
+Copyright (C) 2020 Adam Madsen <adam@ajmadsen.com>
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -44,7 +45,7 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
   if (!pcidev)
     return -ENODEV;
 
-  pci_printk(KERN_INFO, pcidev, "Found device\n");
+  pci_info(pcidev, "Found device\n");
 
   for(entry = vendor_reset_devices; entry->vendor; ++entry)
   {
@@ -66,15 +67,22 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 
   /* we probably always want to lock the device */
   if (!pci_cfg_access_trylock(pcidev))
+  {
+    pci_warn(pcidev, "Could not acquire cfg lock\n");
+    ret = -EAGAIN;
     goto err;
+  }
   else
   {
     if (!device_trylock(&pcidev->dev))
     {
+      pci_warn(pcidev, "Could not acquire device lock\n");
       pci_cfg_access_unlock(pcidev);
+      ret = -EAGAIN;
       goto err;
     }
   }
+  pci_info(pcidev, "Acquired lock\n");
 
   if (entry->ops->pre_reset)
   {
