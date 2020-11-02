@@ -3,13 +3,10 @@ KVER ?= $(shell uname -r)
 KDIR ?= /lib/modules/$(KVER)/build
 
 all:
-	make -C $(KDIR) M=$(PWD) modules
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 clean:
-	make -C $(KDIR) M=$(PWD) clean
-
-userspace:
-	gcc userspace/vendor-reset.c -Wall -Werror -g -Og -o userspace/vendor-reset
+		$(MAKE) -C $(KDIR) M=$(PWD) clean
 
 load: all
 	grep -q '^vendor_reset' /proc/modules && sudo rmmod vendor_reset || true

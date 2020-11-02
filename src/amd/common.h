@@ -33,59 +33,59 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #endif
 /* end from amdgpu_discovery.c */
 
-#define RREG32(reg)                                              \
-  ({                                                             \
-    u32 __out;                                                   \
-    if ((reg) < adev->private->mmio_size)                        \
-      __out = readl(adev->private->mmio + (reg));                \
-    else                                                         \
-    {                                                            \
-      unsigned long __flags;                                     \
-      spin_lock_irqsave(&adev->private->reg_lock, __flags);      \
-      writel((reg), adev->private->mmio + mmMM_INDEX);           \
-      __out = readl(adev->private->mmio + mmMM_DATA);            \
-      spin_unlock_irqrestore(&adev->private->reg_lock, __flags); \
-    }                                                            \
-    __out;                                                       \
+#define RREG32(reg)                                                          \
+  ({                                                                         \
+    u32 __out;                                                               \
+    if ((reg) < adev_to_amd_private(adev)->mmio_size)                        \
+      __out = readl(adev_to_amd_private(adev)->mmio + (reg));                \
+    else                                                                     \
+    {                                                                        \
+      unsigned long __flags;                                                 \
+      spin_lock_irqsave(&adev_to_amd_private(adev)->reg_lock, __flags);      \
+      writel((reg), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
+      __out = readl(adev_to_amd_private(adev)->mmio + mmMM_DATA);            \
+      spin_unlock_irqrestore(&adev_to_amd_private(adev)->reg_lock, __flags); \
+    }                                                                        \
+    __out;                                                                   \
   })
 
-#define WREG32(reg, v)                                           \
-  do                                                             \
-  {                                                              \
-    if ((reg) < adev->private->mmio_size)                        \
-      writel(v, adev->private->mmio + (reg));                    \
-    else                                                         \
-    {                                                            \
-      unsigned long __flags;                                     \
-      spin_lock_irqsave(&adev->private->reg_lock, __flags);      \
-      writel((reg), adev->private->mmio + mmMM_INDEX);           \
-      writel(v, adev->private->mmio + mmMM_DATA);                \
-      spin_unlock_irqrestore(&adev->private->reg_lock, __flags); \
-    }                                                            \
+#define WREG32(reg, v)                                                       \
+  do                                                                         \
+  {                                                                          \
+    if ((reg) < adev_to_amd_private(adev)->mmio_size)                        \
+      writel(v, adev_to_amd_private(adev)->mmio + (reg));                    \
+    else                                                                     \
+    {                                                                        \
+      unsigned long __flags;                                                 \
+      spin_lock_irqsave(&adev_to_amd_private(adev)->reg_lock, __flags);      \
+      writel((reg), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
+      writel(v, adev_to_amd_private(adev)->mmio + mmMM_DATA);                \
+      spin_unlock_irqrestore(&adev_to_amd_private(adev)->reg_lock, __flags); \
+    }                                                                        \
   } while (0)
 
-#define WREG32_PCIE(reg, v)                                     \
-  do                                                            \
-  {                                                             \
-    unsigned long __flags;                                      \
-    spin_lock_irqsave(&adev->private->pcie_lock, __flags);      \
-    WREG32(mmPCIE_INDEX2, reg);                                 \
-    (void)RREG32(mmPCIE_INDEX2);                                \
-    WREG32(mmPCIE_DATA2, v);                                    \
-    (void)RREG32(mmPCIE_DATA2);                                 \
-    spin_unlock_irqrestore(&adev->private->pcie_lock, __flags); \
+#define WREG32_PCIE(reg, v)                                                 \
+  do                                                                        \
+  {                                                                         \
+    unsigned long __flags;                                                  \
+    spin_lock_irqsave(&adev_to_amd_private(adev)->pcie_lock, __flags);      \
+    WREG32(mmPCIE_INDEX2, reg);                                             \
+    (void)RREG32(mmPCIE_INDEX2);                                            \
+    WREG32(mmPCIE_DATA2, v);                                                \
+    (void)RREG32(mmPCIE_DATA2);                                             \
+    spin_unlock_irqrestore(&adev_to_amd_private(adev)->pcie_lock, __flags); \
   } while (0)
 
-#define RREG32_PCIE(reg)                                        \
-  ({                                                            \
-    unsigned long __flags;                                      \
-    u32 __tmp_read;                                             \
-    spin_lock_irqsave(&adev->private->pcie_lock, __flags);      \
-    WREG32(mmPCIE_INDEX2, reg);                                 \
-    (void)RREG32(mmPCIE_INDEX2);                                \
-    __tmp_read = RREG32(mmPCIE_DATA2);                          \
-    spin_unlock_irqrestore(&adev->private->pcie_lock, __flags); \
-    __tmp_read;                                                 \
+#define RREG32_PCIE(reg)                                                    \
+  ({                                                                        \
+    unsigned long __flags;                                                  \
+    u32 __tmp_read;                                                         \
+    spin_lock_irqsave(&adev_to_amd_private(adev)->pcie_lock, __flags);      \
+    WREG32(mmPCIE_INDEX2, reg);                                             \
+    (void)RREG32(mmPCIE_INDEX2);                                            \
+    __tmp_read = RREG32(mmPCIE_DATA2);                                      \
+    spin_unlock_irqrestore(&adev_to_amd_private(adev)->pcie_lock, __flags); \
+    __tmp_read;                                                             \
   })
 
 /* KIQ is only used for SRIOV accesses, we are not targetting these devices so
@@ -111,57 +111,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #define MP1_C2PMSG_90__CONTENT_MASK 0xFFFFFFFFL
 /* end from smu_cm.c */
 
-/* from amdgpu.h */
-enum amd_hw_ip_block_type
-{
-  GC_HWIP = 1,
-  HDP_HWIP,
-  SDMA0_HWIP,
-  SDMA1_HWIP,
-  SDMA2_HWIP,
-  SDMA3_HWIP,
-  SDMA4_HWIP,
-  SDMA5_HWIP,
-  SDMA6_HWIP,
-  SDMA7_HWIP,
-  MMHUB_HWIP,
-  ATHUB_HWIP,
-  NBIO_HWIP,
-  MP0_HWIP,
-  MP1_HWIP,
-  UVD_HWIP,
-  VCN_HWIP = UVD_HWIP,
-  JPEG_HWIP = VCN_HWIP,
-  VCE_HWIP,
-  DF_HWIP,
-  DCE_HWIP,
-  OSSSYS_HWIP,
-  SMUIO_HWIP,
-  PWR_HWIP,
-  NBIF_HWIP,
-  THM_HWIP,
-  CLK_HWIP,
-  UMC_HWIP,
-  RSMU_HWIP,
-  MAX_HWIP
-};
-
-#define HWIP_MAX_INSTANCE 8
-/* end from amdgpu.h */
-
-#include "amdgpu_gfx.h"
-#include "amdgpu_ttm.h"
-#include "drm/drm_print.h"
-
-struct amd_fake_dev
-{
-  uint32_t *reg_offset[MAX_HWIP][HWIP_MAX_INSTANCE];
-  struct amdgpu_gfx  gfx;
-  struct amdgpu_mman mman;
-
-  struct device *dev;
-  struct amd_vendor_private *private;
-};
+#include "compat.h"
 
 struct amd_vendor_private
 {
@@ -180,6 +130,7 @@ struct amd_vendor_private
   struct mutex smu_lock;
 };
 
+#define adev_to_amd_private(adev) ((struct amd_vendor_private *)container_of(adev, struct amd_vendor_private, adev))
 #define amd_private(vdev) ((struct amd_vendor_private *)(vdev->vendor_private))
 
 int amd_common_pre_reset(struct vendor_reset_dev *);

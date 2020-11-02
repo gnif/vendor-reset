@@ -88,7 +88,7 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
   if (!dev->reset_ret)
     pci_set_power_state(pdev, PCI_D3hot);
 
-  kzfree(priv);
+  kfree(priv);
   dev->vendor_private = NULL;
   mutex_destroy(&priv->smu_lock);
 
@@ -106,7 +106,7 @@ static int smu_wait(struct amd_fake_dev *adev)
        --timeout)
     udelay(1);
   if ((ret = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90)) != 0x1)
-    pci_info(adev->private->vdev->pdev, "SMU error 0x%x\n", ret);
+    pci_info(adev_to_amd_private(adev)->vdev->pdev, "SMU error 0x%x\n", ret);
 
   return ret;
 }
@@ -115,7 +115,7 @@ int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg,
 {
   int ret = 0;
 
-  mutex_lock(&adev->private->smu_lock);
+  mutex_lock(&adev_to_amd_private(adev)->smu_lock);
 
   ret = smu_wait(adev);
   if (ret != 0x1)
@@ -132,7 +132,7 @@ int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg,
   ret = smu_wait(adev);
   if (ret != 0x01)
   {
-    pci_err(adev->private->vdev->pdev, "Failed to send message 0x%x: return 0x%x\n", msg, ret);
+    pci_err(adev_to_amd_private(adev)->vdev->pdev, "Failed to send message 0x%x: return 0x%x\n", msg, ret);
     goto out;
   }
 
@@ -142,7 +142,7 @@ int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg,
   ret = ret != 0x01;
 
 out:
-  mutex_unlock(&adev->private->smu_lock);
+  mutex_unlock(&adev_to_amd_private(adev)->smu_lock);
   return ret;
 }
 

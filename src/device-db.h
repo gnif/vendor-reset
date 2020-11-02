@@ -56,4 +56,10 @@ static struct vendor_reset_cfg vendor_reset_devices[] =
         {PCI_VENDOR_ID_ATI, 0x731e, &amd_navi10_ops},
         {PCI_VENDOR_ID_ATI, 0x731f, &amd_navi10_ops},
 
+        /* AMD Navi 14 */
+        {PCI_VENDOR_ID_ATI, 0x7340, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x7341, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x7347, &amd_navi10_ops},
+        {PCI_VENDOR_ID_ATI, 0x734F, &amd_navi10_ops},
+
         {0}};

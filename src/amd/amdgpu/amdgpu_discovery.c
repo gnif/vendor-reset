@@ -21,6 +21,7 @@
  *
  */
 
+#include <drm/drm_print.h>
 #include "common.h"
 #include "amdgpu_device.h"
 #include "amdgpu_discovery.h"
