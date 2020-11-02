@@ -130,14 +130,14 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   u32 sol, smu_resp, mp1_intr, psp_bl_ready;
   enum BACO_STATE baco_state;
 
-  priv->adev = (struct amd_fake_dev){
-      .dev = &dev->pdev->dev,
-      .private = priv,
-  };
   adev = &priv->adev;
-  ret = vega10_reg_base_init(&priv->adev);
+  ret = amd_fake_dev_init(adev, dev);
   if (ret)
     return ret;
+
+  ret = vega10_reg_base_init(&priv->adev);
+  if (ret)
+    goto free_adev;
 
   /* it's important we wait for the SOC to be ready */
   for (timeout = 100000; timeout; --timeout)
@@ -185,6 +185,10 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
 
   pci_info(dev->pdev, "Vega10: Exiting BACO\n");
   ret = vega10_baco_set_state(adev, BACO_STATE_OUT);
+
+free_adev:
+  amd_fake_dev_fini(adev);
+
   return ret;
 }
 
