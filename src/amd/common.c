@@ -70,6 +70,11 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
   struct amd_vendor_private *priv = amd_private(dev);
   struct pci_dev *pdev = dev->pdev;
 
+  if (priv->mmio) {
+    iounmap(priv->mmio);
+    priv->mmio = NULL;
+  }
+
   if (priv->saved_state)
   {
     pci_load_and_free_saved_state(pdev, &priv->saved_state);

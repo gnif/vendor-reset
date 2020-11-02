@@ -162,11 +162,11 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
       smu_resp, sol, mp1_intr ? "yes" : "no",
       psp_bl_ready ? "yes" : "no");
 
-  // if (!sol)
-  // {
-  //   pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
-  //   return -EINVAL;
-  // }
+  if (!sol)
+  {
+    pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
+    return -EINVAL;
+  }
 
   pci_info(dev->pdev, "Vega10: Entering BACO\n");
   ret = vega10_baco_set_state(adev, BACO_STATE_IN);
