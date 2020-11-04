@@ -17,58 +17,47 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include "vendor-reset.h"
+#include <stdio.h>
 #include "ucommon.h"
 
-void help_(const char *prog);
-
-void help_(const char *prog)
+int parse_dbdf(const char *dbdf_str, struct dbdf *out)
 {
-  fprintf(stderr,
-          "Usage:\n"
-          "  %s [domain:]bus:dev.fn\n",
-          prog);
-  exit(1);
-}
-#define help() help_(argv[0])
+  char *dbdf, *tok;
 
-int main(int argc, char *argv[])
-{
-  int ret;
-  struct dbdf devref;
+  if (!dbdf_str || !(dbdf = strdup(dbdf_str)))
+    return 1;
 
-  if (argc < 2)
-    help();
-
-  if (parse_dbdf(argv[1], &devref))
-    help();
-
-  int fd = open("/dev/vendor_reset", O_RDWR);
-  if (fd < 0)
-  {
-    perror("open");
-    return fd;
-  }
-
-  struct vendor_reset_ioctl dev = {
-    .domain = devref.domain,
-    .bus = devref.bus,
-    .devfn = ((devref.device & 0x1f) << 3) | (devref.function & 0x07),
-  };
-
-  ret = ioctl(fd, VENDOR_RESET_RESET, &dev);
-  if (ret < 0)
-  {
-    perror("ioctl");
+  if (!(tok = strtok(dbdf, ":")))
     goto err;
+
+  out->domain = 0;
+  out->bus = strtoul(tok, NULL, 16);
+
+  tok = strtok(NULL, ":");
+  if (strtok(NULL, ":"))
+  {
+    out->domain = out->bus;
+    out->bus = strtoul(tok, NULL, 16);
+    /* guaranteed to be okay */
+    tok += strlen(tok) + 1;
   }
+
+  if (!(tok = strtok(tok, ".")))
+    goto err;
+
+  out->device = strtoul(tok, NULL, 16);
+
+  if (!(tok = strtok(NULL, ".")))
+    goto err;
+
+  out->function = strtoul(tok, NULL, 16);
+
+  free(dbdf);
+  return 0;
 
 err:
-  close(fd);
-  return 0;
+  free(dbdf);
+  return 1;
 }
