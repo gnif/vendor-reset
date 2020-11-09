@@ -16,6 +16,7 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
+extern struct vendor_reset_ops amd_polaris10_ops;
 extern struct vendor_reset_ops amd_vega10_ops;
 extern struct vendor_reset_ops amd_vega20_ops;
 extern struct vendor_reset_ops amd_navi10_ops;

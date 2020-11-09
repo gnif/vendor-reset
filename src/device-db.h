@@ -20,6 +20,21 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 static struct vendor_reset_cfg vendor_reset_devices[] =
     {
+        /* AMD Polaris 10 */
+        {PCI_VENDOR_ID_ATI, 0x67C0, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67C1, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67C2, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67C4, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67C7, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67D0, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67DF, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67C8, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67C9, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67CA, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67CC, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x67CF, &amd_vega10_ops},
+        {PCI_VENDOR_ID_ATI, 0x6FDF, &amd_vega10_ops},
+
         /* AMD Vega 10 */
         {PCI_VENDOR_ID_ATI, 0x6860, &amd_vega10_ops},
         {PCI_VENDOR_ID_ATI, 0x6861, &amd_vega10_ops},

@@ -130,8 +130,15 @@ struct amd_vendor_private
   struct mutex smu_lock;
 };
 
-#define adev_to_amd_private(adev) ((struct amd_vendor_private *)container_of(adev, struct amd_vendor_private, adev))
-#define amd_private(vdev) ((struct amd_vendor_private *)(vdev->vendor_private))
+static inline struct amd_vendor_private *adev_to_amd_private(struct amd_fake_dev *adev)
+{
+  return container_of(adev, struct amd_vendor_private, adev);
+}
+
+static inline struct amd_vendor_private *amd_private(struct vendor_reset_dev *vdev)
+{
+  return vdev->vendor_private;
+}
 
 int amd_common_pre_reset(struct vendor_reset_dev *);
 int amd_common_post_reset(struct vendor_reset_dev *);
