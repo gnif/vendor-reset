@@ -72,10 +72,15 @@ static int amd_polaris10_reset(struct vendor_reset_dev *vdev)
   struct amd_vendor_private *priv = amd_private(vdev);
   struct amd_fake_dev *adev = &priv->adev;
 
+  ret = amd_fake_dev_init(adev, vdev);
+  if (ret)
+    return ret;
+
   amdgpu_atombios_scratch_regs_engine_hung(adev, true);
   ret = vi_gpu_pci_config_reset(adev);
   amdgpu_atombios_scratch_regs_engine_hung(adev, false);
 
+  amd_fake_dev_fini(adev);
   return ret;
 }
 
