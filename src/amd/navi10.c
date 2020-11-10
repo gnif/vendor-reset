@@ -134,10 +134,10 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   WREG32(adev->bios_scratch_reg_offset + 7, 0);
 
   /* it only makes sense to reset mp1 if it's running
-	 * XXX: is this even necessary? in early testing, I ran into
-	 * situations where MP1 was alive but not responsive, but in
-	 * later testing I have not been able to replicate this scenario.
-	 */
+   * XXX: is this even necessary? in early testing, I ran into
+   * situations where MP1 was alive but not responsive, but in
+   * later testing I have not been able to replicate this scenario.
+   */
   if (smu_resp != 0x01 && mp1_intr)
   {
     nv_info("MP1 reset\n");
@@ -171,10 +171,10 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   }
 
   /*
-	 * again, this only makes sense if we have an SMU to talk to
-	 * some of these may fail, that's okay. we're just turning off as many
-	 * things as possible
-	 */
+   * again, this only makes sense if we have an SMU to talk to
+   * some of these may fail, that's okay. we're just turning off as many
+   * things as possible
+   */
   if (mp1_intr)
   {
     smu_wait(adev);
@@ -237,9 +237,9 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   }
   nv_info("memsize: %x\n", tmp);
 
-  /* 
-	 * this takes a long time :( 
-	 */
+  /*
+   * this takes a long time :(
+   */
   for (timeout = 100; timeout; --timeout)
   {
     /* see if PSP bootloader comes back */
