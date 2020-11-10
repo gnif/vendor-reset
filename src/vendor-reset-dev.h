@@ -27,6 +27,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 struct vendor_reset_dev
 {
   struct pci_dev *pdev;
+  unsigned long info;
 
   int reset_ret;
 
@@ -54,6 +55,9 @@ struct vendor_reset_cfg
 
   /* the reset operations */
   const struct vendor_reset_ops * ops;
+
+  /* device type for combined ops */
+  unsigned long info;
 };
 
 #endif

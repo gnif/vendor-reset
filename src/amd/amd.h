@@ -16,7 +16,20 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-extern struct vendor_reset_ops amd_polaris10_ops;
-extern struct vendor_reset_ops amd_vega10_ops;
-extern struct vendor_reset_ops amd_vega20_ops;
-extern struct vendor_reset_ops amd_navi10_ops;
+enum amd_device_type
+{
+  AMD_POLARIS10,
+  AMD_POLARIS11,
+  AMD_POLARIS12,
+  AMD_VEGA10,
+  AMD_VEGA12,
+  AMD_VEGA20,
+  AMD_NAVI10,
+  AMD_NAVI12,
+  AMD_NAVI14,
+};
+
+extern const struct vendor_reset_ops amd_polaris10_ops;
+extern const struct vendor_reset_ops amd_vega10_ops;
+extern const struct vendor_reset_ops amd_vega20_ops;
+extern const struct vendor_reset_ops amd_navi10_ops;

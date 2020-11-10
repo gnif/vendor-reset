@@ -9,6 +9,8 @@ vendor-reset-y += \
 	src/amd/amdgpu/common_baco.o \
 	src/amd/amdgpu/vega10_reg_init.o \
 	src/amd/amdgpu/navi10_reg_init.o \
+	src/amd/amdgpu/navi12_reg_init.o \
+	src/amd/amdgpu/navi14_reg_init.o \
 	src/amd/amdgpu/amdgpu_device.o \
 	src/amd/amdgpu/amdgpu_discovery.o \
 	src/amd/amdgpu/atom.o \

@@ -144,6 +144,12 @@ int amd_common_pre_reset(struct vendor_reset_dev *);
 int amd_common_post_reset(struct vendor_reset_dev *);
 
 int smum_send_msg_to_smc(struct amd_fake_dev *adev, uint16_t msg, uint32_t *resp);
-int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg, uint32_t parameter, uint32_t *resp);
+int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg,
+                                        uint32_t parameter, uint32_t *resp);
+
+void amdgpu_atombios_scratch_regs_engine_hung(struct amd_fake_dev *adev, bool hung);
+
+int smu_wait(struct amd_fake_dev *adev);
+int psp_wait_for(struct amd_fake_dev *adev, uint32_t reg_index, uint32_t reg_val, uint32_t mask, bool check_changed);
 
 #endif

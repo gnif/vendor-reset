@@ -126,7 +126,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
 {
   struct amd_vendor_private *priv = amd_private(dev);
   struct amd_fake_dev *adev;
-  int ret, timeout;
+  int ret = 0, timeout;
   u32 sol, smu_resp, mp1_intr, psp_bl_ready;
   enum BACO_STATE baco_state;
 
@@ -168,12 +168,13 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   if (sol == ~1L && baco_state != BACO_STATE_IN)
   {
     pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
-    return -EINVAL;
+    ret = -EINVAL;
+    goto free_adev;
   }
 
   /* if there's no sign of life we usually can't reset */
   if (!sol)
-    return 0;
+    goto free_adev;
 
   if (baco_state == BACO_STATE_OUT)
   {

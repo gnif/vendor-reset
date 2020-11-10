@@ -25,6 +25,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "soc15_common.h"
 #include "soc15.h"
 #include "common.h"
+#include "compat.h"
 
 int amd_common_pre_reset(struct vendor_reset_dev *dev)
 {
@@ -98,7 +99,7 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
   return 0;
 }
 
-static int smu_wait(struct amd_fake_dev *adev)
+int smu_wait(struct amd_fake_dev *adev)
 {
   u32 ret;
   int timeout;
@@ -152,4 +153,44 @@ out:
 int smum_send_msg_to_smc(struct amd_fake_dev *adev, uint16_t msg, uint32_t *resp)
 {
   return smum_send_msg_to_smc_with_parameter(adev, msg, 0, resp);
+}
+
+/* from amdgpu_atombios.c */
+void amdgpu_atombios_scratch_regs_engine_hung(struct amd_fake_dev *adev,
+                                              bool hung)
+{
+  u32 tmp = RREG32(adev->bios_scratch_reg_offset + 3);
+
+  if (hung)
+    tmp |= ATOM_S3_ASIC_GUI_ENGINE_HUNG;
+  else
+    tmp &= ~ATOM_S3_ASIC_GUI_ENGINE_HUNG;
+
+  WREG32(adev->bios_scratch_reg_offset + 3, tmp);
+}
+
+/* from amdgpu_psp.c */
+int psp_wait_for(struct amd_fake_dev *adev, uint32_t reg_index,
+                 uint32_t reg_val, uint32_t mask, bool check_changed)
+{
+  uint32_t val;
+  int i;
+
+  for (i = 0; i < 100000; i++)
+  {
+    val = RREG32(reg_index);
+    if (check_changed)
+    {
+      if (val != reg_val)
+        return 0;
+    }
+    else
+    {
+      if ((val & mask) == reg_val)
+        return 0;
+    }
+    udelay(1);
+  }
+
+  return -ETIME;
 }

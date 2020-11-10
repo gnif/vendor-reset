@@ -43,6 +43,7 @@ static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
   if (cfg->vendor)
   {
     vdev.pdev = dev;
+    vdev.info = cfg->info;
 
     if (cfg->ops->pre_reset && (ret = cfg->ops->pre_reset(&vdev)) && ret)
       return ret;

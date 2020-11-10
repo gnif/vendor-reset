@@ -68,6 +68,7 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
   }
 
   vdev.pdev = pcidev;
+  vdev.info = entry->info;
 
   /* we probably always want to lock the device */
   if (!pci_cfg_access_trylock(pcidev))

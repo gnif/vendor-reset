@@ -25,7 +25,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "common.h"
 #include "compat.h"
 
-#define bios_scratch_reg_offset mmBIOS_SCRATCH_0
 #define AMDGPU_ASIC_RESET_DATA 0x39d5e86b /* from amdgpu.h */
 
 /* from vi.c */
@@ -52,20 +51,6 @@ static int vi_gpu_pci_config_reset(struct amd_fake_dev *adev)
   return -EINVAL;
 }
 
-static inline void amdgpu_atombios_scratch_regs_engine_hung(struct amd_fake_dev *adev, bool hung)
-{
-  u32 tmp;
-
-  tmp = RREG32(bios_scratch_reg_offset + 3);
-
-  if (hung)
-    tmp |= ATOM_S3_ASIC_GUI_ENGINE_HUNG;
-  else
-    tmp &= ~ATOM_S3_ASIC_GUI_ENGINE_HUNG;
-
-  WREG32(bios_scratch_reg_offset + 3, tmp);
-}
-
 static int amd_polaris10_reset(struct vendor_reset_dev *vdev)
 {
   int ret = 0;
@@ -75,6 +60,9 @@ static int amd_polaris10_reset(struct vendor_reset_dev *vdev)
   ret = amd_fake_dev_init(adev, vdev);
   if (ret)
     return ret;
+
+  /* pre-firmware constant */
+  adev->bios_scratch_reg_offset = mmBIOS_SCRATCH_0;
 
   amdgpu_atombios_scratch_regs_engine_hung(adev, true);
   ret = vi_gpu_pci_config_reset(adev);
