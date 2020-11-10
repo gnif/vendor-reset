@@ -1,3 +1,5 @@
 userccflags += -I$(src)/../include -g
-userprogs-always-y += vendor-reset
+userprogs += vendor-reset
+always-y += $(userprogs)
+
 vendor-reset-objs += vendor-reset.o ucommon.o
