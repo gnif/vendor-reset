@@ -51,8 +51,6 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
   if (!pcidev)
     return -ENODEV;
 
-  pci_info(pcidev, "Found device\n");
-
   for(entry = vendor_reset_devices; entry->vendor; ++entry)
   {
     if (entry->vendor != pcidev->vendor)
@@ -88,7 +86,6 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
       goto err;
     }
   }
-  pci_info(pcidev, "Acquired lock\n");
 
   if (entry->ops->pre_reset)
   {
