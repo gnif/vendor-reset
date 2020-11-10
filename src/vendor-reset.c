@@ -161,12 +161,16 @@ static int __init vendor_reset_init(void)
   {
     ret = fh_install_hooks(fh_hooks);
     if (ret)
-      return ret;
+      goto err;
 
     vr_info("Hooks installed successfully\n");
   }
 
   return 0;
+
+err:
+  misc_deregister(&vendor_reset_misc);
+  return ret;
 }
 
 static void __exit vendor_reset_exit(void)
