@@ -32,6 +32,9 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
   struct pci_dev *pdev = dev->pdev;
   int ret;
 
+  /* disable bus reset for the card, seems to be an issue with all of em */
+  pdev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
+
   priv = kzalloc(sizeof *priv, GFP_KERNEL);
   if (!priv)
     return -ENOMEM;
