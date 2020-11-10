@@ -23,16 +23,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/kernel.h>
 #include "vendor-reset-dev.h"
 
-/* from amdgpu_discovery.c */
-#ifndef mmMM_INDEX
-#define mmRCC_CONFIG_MEMSIZE 0xde3
-#define mmMM_INDEX 0x0
-#define mmMM_INDEX_HI 0x6
-#define mmMM_DATA 0x1
-#define HW_ID_MAX 300
-#endif
-/* end from amdgpu_discovery.c */
-
 #define RREG32(reg)                                                          \
   ({                                                                         \
     u32 __out;                                                               \

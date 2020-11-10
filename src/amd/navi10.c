@@ -22,6 +22,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "vendor-reset-dev.h"
 
 #include "amd.h"
+#include "common_defs.h"
 #include "common.h"
 #include "firmware.h"
 #include "amdgpu_discovery.h"

@@ -24,6 +24,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "vendor-reset-dev.h"
 #include "soc15_common.h"
 #include "soc15.h"
+#include "common_defs.h"
 #include "common.h"
 #include "compat.h"
 

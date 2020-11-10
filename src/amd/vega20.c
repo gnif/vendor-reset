@@ -18,12 +18,136 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "vendor-reset-dev.h"
 
+#include <linux/delay.h>
+
+#include "nbio_7_4_offset.h"
+#include "nbio_7_4_sh_mask.h"
+#include "thm_11_0_2_offset.h"
+#include "thm_11_0_2_sh_mask.h"
+#include "mp_9_0_offset.h"
+#include "mp_9_0_sh_mask.h"
+#include "common.h"
+
+#include "soc15.h"
+#include "soc15_common.h"
+#include "common_baco.h"
+#include "vega20_ppsmc.h"
+
+static const struct soc15_baco_cmd_entry clean_baco_tbl[] =
+{
+  {CMD_WRITE, SOC15_REG_ENTRY(NBIF, 0, mmBIOS_SCRATCH_6), 0, 0, 0, 0},
+  {CMD_WRITE, SOC15_REG_ENTRY(NBIF, 0, mmBIOS_SCRATCH_7), 0, 0, 0, 0},
+};
+
+extern int vega20_reg_base_init(struct amd_fake_dev *adev);
+
+static int vega20_baco_get_state(struct amd_fake_dev *adev, enum BACO_STATE *state)
+{
+  uint32_t reg = RREG32_SOC15(NBIF, 0, mmBACO_CNTL);
+
+  if (reg & BACO_CNTL__BACO_MODE_MASK)
+    /* gfx has already entered BACO state */
+    *state = BACO_STATE_IN;
+  else
+    *state = BACO_STATE_OUT;
+  return 0;
+}
+
+static int vega20_baco_set_state(struct amd_fake_dev *adev, enum BACO_STATE state)
+{
+  enum BACO_STATE cur_state;
+  uint32_t data;
+
+  vega20_baco_get_state(adev, &cur_state);
+
+  if (cur_state == state)
+    return 0;
+
+  if (state == BACO_STATE_IN)
+  {
+    data = RREG32_SOC15(THM, 0, mmTHM_BACO_CNTL);
+    data |= 0x80000000;
+    WREG32_SOC15(THM, 0, mmTHM_BACO_CNTL, data);
+
+    if (smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_EnterBaco, 0, NULL))
+      return -EINVAL;
+  }
+  else
+  {
+    if (smum_send_msg_to_smc(adev, PPSMC_MSG_ExitBaco, NULL))
+      return -EINVAL;
+
+    if (!soc15_baco_program_registers(adev, clean_baco_tbl,
+          ARRAY_SIZE(clean_baco_tbl)))
+      return -EINVAL;
+  }
+
+  return 0;
+}
+
 static int amd_vega20_reset(struct vendor_reset_dev *dev)
 {
-  return 0;
+  struct amd_vendor_private *priv = amd_private(dev);
+  struct amd_fake_dev *adev;
+  int ret = 0, timeout;
+  u32 sol;
+  enum BACO_STATE baco_state;
+
+  adev = &priv->adev;
+  ret = amd_fake_dev_init(adev, dev);
+  if (ret)
+    return ret;
+
+  ret = vega20_reg_base_init(&priv->adev);
+  if (ret)
+    goto free_adev;
+
+  /* it's important we wait for the SOC to be ready */
+  for (timeout = 100000; timeout; --timeout)
+  {
+    sol = RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_81);
+    if (sol != 0xFFFFFFFF && sol != 0)
+      break;
+    udelay(1);
+  }
+
+  vega20_baco_get_state(adev, &baco_state);
+  if (sol == ~1L && baco_state != BACO_STATE_IN)
+  {
+    pci_warn(dev->pdev, "vega20: Timed out waiting for SOL to be valid\n");
+    ret = -EINVAL;
+    goto free_adev;
+  }
+
+  /* if there's no sign of life we usually can't reset */
+  if (!sol)
+    goto free_adev;
+
+  ret = vega20_baco_set_state(adev, BACO_STATE_IN);
+  if (ret)
+  {
+    pci_warn(dev->pdev, "vega20: enter BACO failed\n");
+    goto free_adev;
+  }
+
+  ret = vega20_baco_set_state(adev, BACO_STATE_OUT);
+  if (ret)
+  {
+    pci_warn(dev->pdev, "vega20: exit BACO failed\n");
+    goto free_adev;
+  }
+
+  pci_info(dev->pdev, "vega20: BACO reset successful\n");
+
+free_adev:
+  amd_fake_dev_fini(adev);
+
+  return ret;
 }
 
 const struct vendor_reset_ops amd_vega20_ops =
 {
-  .reset = amd_vega20_reset
+	.pre_reset = amd_common_pre_reset,
+  .reset = amd_vega20_reset,
+	.post_reset = amd_common_post_reset,
 };

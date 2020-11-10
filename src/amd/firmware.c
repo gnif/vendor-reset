@@ -21,6 +21,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "atom.h"
 #include "amdgpu_atomfirmware.h"
 #include "compat.h"
+#include "common_defs.h"
 #include "common.h"
 #include "firmware.h"
 
