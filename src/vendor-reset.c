@@ -33,7 +33,9 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #define VENDOR_RESET_DEVNAME "vendor_reset"
 
-static bool install_hook = false;
+#define vr_info(fmt, args...) pr_info("vendor-reset: " fmt, ##args)
+
+static bool install_hook = true;
 module_param(install_hook, bool, 0);
 
 static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
@@ -156,7 +158,10 @@ static int __init vendor_reset_init(void)
     return ret;
 
   if (install_hook)
+  {
     ret = fh_install_hooks(fh_hooks);
+    vr_info("Hooks installed successfully\n");
+  }
 
   return ret;
 }
