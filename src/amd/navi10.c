@@ -32,10 +32,10 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "psp_gfx_if.h"
 #include "nv.h"
 
-#define log_prefix "Navi10/12/14: "
-#define nv_info(fmt, arg...) pci_info(dev->pdev, log_prefix fmt, ##arg)
-#define nv_warn(fmt, arg...) pci_warn(dev->pdev, log_prefix fmt, ##arg)
-#define nv_err(fmt, arg...) pci_err(dev->pdev, log_prefix fmt, ##arg)
+static const char * log_prefix;
+#define nv_info(fmt, arg...) pci_info(dev->pdev, "%s " fmt, log_prefix, ##arg)
+#define nv_warn(fmt, arg...) pci_warn(dev->pdev, "%s " fmt, log_prefix, ##arg)
+#define nv_err(fmt, arg...) pci_err(dev->pdev, "%s " fmt, log_prefix, ##arg)
 
 extern bool amdgpu_get_bios(struct amd_fake_dev *adev);
 
@@ -50,6 +50,16 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   ret = amd_fake_dev_init(adev, dev);
   if (ret)
     return ret;
+
+  switch (dev->info)
+  {
+  case AMD_NAVI10: log_prefix = "navi10"; break;
+  case AMD_NAVI12: log_prefix = "navi12"; break;
+  case AMD_NAVI14: log_prefix = "navi14"; break;
+  default:
+    pci_err(dev->pdev, "Unknown Navi type device: [%04x:%04x]\n", dev->pdev->vendor, dev->pdev->device);
+    return -ENOTSUPP;
+  }
 
   ret = amdgpu_discovery_reg_base_init(adev);
   if (ret < 0)
@@ -67,7 +77,7 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
       navi14_reg_base_init(adev);
       break;
     default:
-      pci_err(dev->pdev, "Unknown Navi type device: [%04x:%04x]\n", dev->pdev->vendor, dev->pdev->device);
+      /* should never happen */
       return -ENOTSUPP;
     }
   }
