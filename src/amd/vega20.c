@@ -147,7 +147,7 @@ free_adev:
 
 const struct vendor_reset_ops amd_vega20_ops =
 {
-	.pre_reset = amd_common_pre_reset,
+  .pre_reset = amd_common_pre_reset,
   .reset = amd_vega20_reset,
-	.post_reset = amd_common_post_reset,
+  .post_reset = amd_common_post_reset,
 };
