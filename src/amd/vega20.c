@@ -121,7 +121,10 @@ static int amd_vega20_reset(struct vendor_reset_dev *dev)
 
   /* if there's no sign of life we usually can't reset */
   if (!sol)
+  {
+    pci_info(dev->pdev, "vega20: no SOL, not attempting BACO reset\n");
     goto free_adev;
+  }
 
   ret = vega20_baco_set_state(adev, BACO_STATE_IN);
   if (ret)
