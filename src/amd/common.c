@@ -37,7 +37,7 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
   pdev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
 
   /* do not try to reset the card under amdgpu, it will cause problems */
-  if (pdev->dev.driver && strcmp(pdev->dev.driver->name, "amdgpu"))
+  if (pdev->driver && !strcmp(pdev->driver->name, "amdgpu"))
     return -ENOTTY;
 
   priv = kzalloc(sizeof *priv, GFP_KERNEL);
