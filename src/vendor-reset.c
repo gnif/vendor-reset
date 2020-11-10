@@ -165,10 +165,10 @@ static int __init vendor_reset_init(void)
 
 static void __exit vendor_reset_exit(void)
 {
-  misc_deregister(&vendor_reset_misc);
-
   if (install_hook)
     fh_remove_hooks(fh_hooks);
+
+  misc_deregister(&vendor_reset_misc);
 }
 
 module_init(vendor_reset_init);
