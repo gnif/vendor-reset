@@ -33,9 +33,9 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "nv.h"
 
 static const char * log_prefix;
-#define nv_info(fmt, arg...) pci_info(dev->pdev, "%s " fmt, log_prefix, ##arg)
-#define nv_warn(fmt, arg...) pci_warn(dev->pdev, "%s " fmt, log_prefix, ##arg)
-#define nv_err(fmt, arg...) pci_err(dev->pdev, "%s " fmt, log_prefix, ##arg)
+#define nv_info(fmt, arg...) pci_info(dev->pdev, "%s: " fmt, log_prefix, ##arg)
+#define nv_warn(fmt, arg...) pci_warn(dev->pdev, "%s: " fmt, log_prefix, ##arg)
+#define nv_err(fmt, arg...) pci_err(dev->pdev, "%s: " fmt, log_prefix, ##arg)
 
 extern bool amdgpu_get_bios(struct amd_fake_dev *adev);
 
