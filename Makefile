@@ -10,6 +10,6 @@ clean:
 
 load: all
 	grep -q '^vendor_reset' /proc/modules && sudo rmmod vendor_reset || true
-	sudo insmod ./vendor-reset.ko
+	sudo insmod ./vendor-reset.ko $(if $(HOOK),install_hook=yes,)
 
 .PHONY: userspace load
