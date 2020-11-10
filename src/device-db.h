@@ -33,6 +33,27 @@ Place, Suite 330, Boston, MA 02111-1307 USA
     {PCI_VENDOR_ID_ATI, 0x67CF, op}, \
     {PCI_VENDOR_ID_ATI, 0x6FDF, op}
 
+#define AMD_POLARIS11(op)            \
+    {PCI_VENDOR_ID_ATI, 0x67E0, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67E3, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67E8, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67EB, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67EF, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67FF, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67E1, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67E7, op}, \
+    {PCI_VENDOR_ID_ATI, 0x67E9, op}
+
+#define AMD_POLARIS12(op)            \
+    {PCI_VENDOR_ID_ATI, 0x6980, op}, \
+    {PCI_VENDOR_ID_ATI, 0x6981, op}, \
+    {PCI_VENDOR_ID_ATI, 0x6985, op}, \
+    {PCI_VENDOR_ID_ATI, 0x6986, op}, \
+    {PCI_VENDOR_ID_ATI, 0x6987, op}, \
+    {PCI_VENDOR_ID_ATI, 0x6995, op}, \
+    {PCI_VENDOR_ID_ATI, 0x6997, op}, \
+    {PCI_VENDOR_ID_ATI, 0x699F, op}
+
 #define AMD_VEGA10(op)               \
     {PCI_VENDOR_ID_ATI, 0x6860, op}, \
     {PCI_VENDOR_ID_ATI, 0x6861, op}, \
@@ -77,6 +98,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 static struct vendor_reset_cfg vendor_reset_devices[] = {
     AMD_POLARIS10(&amd_polaris10_ops),
+    AMD_POLARIS11(&amd_polaris10_ops),
+    AMD_POLARIS12(&amd_polaris10_ops),
     AMD_VEGA10(&amd_vega10_ops),
     AMD_VEGA20(&amd_vega20_ops),
     AMD_NAVI10(&amd_navi10_ops),
