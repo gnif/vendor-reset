@@ -28,7 +28,13 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "device-db.h"
 
+#include "ftrace.h"
+#include "hooks.h"
+
 #define VENDOR_RESET_DEVNAME "vendor_reset"
+
+static bool install_hook = false;
+module_param(install_hook, bool, 0);
 
 static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 {
@@ -145,12 +151,24 @@ static struct miscdevice vendor_reset_misc =
 
 static int __init vendor_reset_init(void)
 {
-  return misc_register(&vendor_reset_misc);
+  int ret;
+
+  ret = misc_register(&vendor_reset_misc);
+  if (ret)
+    return ret;
+
+  if (install_hook)
+    ret = fh_install_hooks(fh_hooks);
+
+  return ret;
 }
 
 static void __exit vendor_reset_exit(void)
 {
   misc_deregister(&vendor_reset_misc);
+
+  if (install_hook)
+    fh_remove_hooks(fh_hooks);
 }
 
 module_init(vendor_reset_init);
