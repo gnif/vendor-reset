@@ -26,6 +26,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "ftrace.h"
 
 /*
+ * Much of this file was inspired by https://www.apriorit.com/dev-blog/546-hooking-linux-functions-2
+ *
  * Honestly the whole removal of kallsyms_lookup_name is hella fishy, Google.
  * Thank you, Filip Pynckels
  * http://users.telenet.be/pynckels/2020-2-Linux-kernel-unexported-kallsyms-functions.pdf
