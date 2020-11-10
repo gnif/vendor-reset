@@ -160,10 +160,13 @@ static int __init vendor_reset_init(void)
   if (install_hook)
   {
     ret = fh_install_hooks(fh_hooks);
+    if (ret)
+      return ret;
+
     vr_info("Hooks installed successfully\n");
   }
 
-  return ret;
+  return 0;
 }
 
 static void __exit vendor_reset_exit(void)
