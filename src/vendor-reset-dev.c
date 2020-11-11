@@ -17,31 +17,55 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
 #include "vendor-reset-dev.h"
-#include "ftrace.h"
-#include "hooks.h"
+#include "device-db.h"
 
-static int (*orig_pci_dev_specific_reset)(struct pci_dev *dev, int probe);
-
-static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
+struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor, unsigned
+  int device)
 {
-  int ret;
-  struct vendor_reset_cfg *cfg;
+  struct vendor_reset_cfg * cfg;
 
-  ret = orig_pci_dev_specific_reset(dev, probe);
-  if (!ret || ret != -ENOTTY)
-    return ret;
+  for(cfg = vendor_reset_devices; cfg->vendor; ++cfg)
+  {
+    if (cfg->vendor != vendor)
+      continue;
 
-  cfg = vendor_reset_cfg_find(dev->vendor, dev->device);
-  if (!cfg)
-    return -ENOTTY;
+    if (device == PCI_ANY_ID || device == cfg->device)
+      break;
+  }
 
-  return vendor_reset_dev_locked(cfg, dev);
+  if (!cfg->vendor)
+    return NULL;
+
+  return cfg;
 }
 
-struct ftrace_hook fh_hooks[] = {
-    HOOK("pci_dev_specific_reset", &orig_pci_dev_specific_reset, hooked_pci_dev_specific_reset),
-    {0},
-};
+long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
+{
+  struct vendor_reset_dev vdev =
+  {
+    .pdev = dev,
+    .info = cfg->info
+  };
+  int ret;
+
+  if (cfg->ops->pre_reset)
+  {
+    ret = cfg->ops->pre_reset(&vdev);
+    if (ret)
+      return ret;
+  }
+
+  /* expose return code to cleanup */
+  ret = vdev.reset_ret = cfg->ops->reset(&vdev);
+  if (ret)
+  {
+    pci_warn(dev, "Failed to reset device\n");
+    return ret;
+  }
+
+  if (cfg->ops->post_reset)
+    ret = cfg->ops->post_reset(&vdev);
+
+  return ret;
+}

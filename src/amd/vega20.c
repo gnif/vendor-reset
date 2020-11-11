@@ -62,7 +62,6 @@ static int vega20_baco_set_state(struct amd_fake_dev *adev, enum BACO_STATE stat
   uint32_t data;
 
   vega20_baco_get_state(adev, &cur_state);
-
   if (cur_state == state)
     return 0;
 

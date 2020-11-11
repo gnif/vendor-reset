@@ -22,7 +22,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "vendor-reset.h"
+#include "vendor-reset-ioctl.h"
 #include "ucommon.h"
 
 void help_(const char *prog);

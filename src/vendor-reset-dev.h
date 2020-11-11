@@ -20,8 +20,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef _H_VENDOR_RESET_DEV
 #define _H_VENDOR_RESET_DEV
 
-#define VENDOR_RESET_DEVICE_ALL ((unsigned int)-1)
-
 #include <linux/pci.h>
 
 struct vendor_reset_dev
@@ -49,8 +47,7 @@ struct vendor_reset_cfg
   /* the vendor ID */
   unsigned int vendor;
 
-  /* the device ID or VENDOR_RESET_DEVICE_ALL to match all devices for the
-   * vendor */
+  /* the device ID or PCI_ANY_ID to match all devices for the vendor */
   unsigned int device;
 
   /* the reset operations */
@@ -59,5 +56,12 @@ struct vendor_reset_cfg
   /* device type for combined ops */
   unsigned long info;
 };
+
+/* search the device table for the specified vendor and device id and return it */
+struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor, unsigned
+  int device);
+
+/* perform the device reset */
+long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
 
 #endif

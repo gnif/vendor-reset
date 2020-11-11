@@ -24,9 +24,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/pci.h>
 
 #include "vendor-reset-dev.h"
-#include "vendor-reset.h"
-
-#include "device-db.h"
+#include "vendor-reset-ioctl.h"
 
 #include "ftrace.h"
 #include "hooks.h"
@@ -41,10 +39,9 @@ module_param(install_hook, bool, 0);
 static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 {
   struct vendor_reset_ioctl dev;
-  struct vendor_reset_cfg *entry = vendor_reset_devices;
+  struct vendor_reset_cfg *cfg;
   struct pci_dev * pcidev;
   int ret;
-  struct vendor_reset_dev vdev = {0};
 
   if (copy_from_user(&dev, (void __user *)arg, sizeof(dev)))
     return -EFAULT;
@@ -53,24 +50,12 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
   if (!pcidev)
     return -ENODEV;
 
-  for(entry = vendor_reset_devices; entry->vendor; ++entry)
-  {
-    if (entry->vendor != pcidev->vendor)
-      continue;
-
-    if (entry->device == VENDOR_RESET_DEVICE_ALL ||
-        entry->device == pcidev->device)
-      break;
-  }
-
-  if (!entry->vendor)
+  cfg = vendor_reset_cfg_find(pcidev->vendor, pcidev->device);
+  if (!cfg)
   {
     ret = -EOPNOTSUPP;
     goto err;
   }
-
-  vdev.pdev = pcidev;
-  vdev.info = entry->info;
 
   /* we probably always want to lock the device */
   if (!pci_cfg_access_trylock(pcidev))
@@ -79,36 +64,19 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
     ret = -EAGAIN;
     goto err;
   }
-  else
+
+  if (!device_trylock(&pcidev->dev))
   {
-    if (!device_trylock(&pcidev->dev))
-    {
-      pci_warn(pcidev, "Could not acquire device lock\n");
-      pci_cfg_access_unlock(pcidev);
-      ret = -EAGAIN;
-      goto err;
-    }
+    pci_warn(pcidev, "Could not acquire device lock\n");
+    ret = -EAGAIN;
+    goto unlock;
   }
 
-  if (entry->ops->pre_reset)
-  {
-    ret = entry->ops->pre_reset(&vdev);
-    if (ret)
-      goto unlock;
-  }
-
-  /* expose return code to cleanup */
-  ret = vdev.reset_ret = entry->ops->reset(&vdev);
-  if (ret)
-    pci_warn(pcidev, "Failed to reset device\n");
-
-  if (entry->ops->post_reset)
-    ret = entry->ops->post_reset(&vdev);
+  ret = vendor_reset_dev_locked(cfg, pcidev);
+  device_unlock(&pcidev->dev);
 
 unlock:
-  device_unlock(&pcidev->dev);
   pci_cfg_access_unlock(pcidev);
-
 err:
   pci_dev_put(pcidev);
   return ret;
