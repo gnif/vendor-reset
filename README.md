@@ -1,4 +1,4 @@
-Vendor Reset
+# Vendor Reset
 
 The goal of this project is to provide a kernel module that is capable of
 resetting hardware devices into a state where they can be re-initialized or
@@ -7,8 +7,45 @@ these in the kernel as PCI quirks, some of the reset procedures are very complex
 and would never be accepted as a quirk (ie AMD Vega 10).
 
 By providing this as an out of tree kernel module, vendors will be able to
-easily create pull requests to add functionallity to this module, and users will
+easily create pull requests to add functionality to this module, and users will
 be able to easily update this module without requiring a complete kernel rebuild.
+
+## Patching the kernel
+
+TL;DR - No patching required.
+
+This module has been written to use `ftrace` to hook `pci_dev_specific_reset`,
+allowing it to handle device resets directly without patching the running
+kernel. Simply modprobing the module is enough to enable the reset routines for
+all supported hardware.
+
+## Installing
+
+This module can be installed either using the standard `make`, `make install`
+pattern, or through `dkms` (recommended).
+
+    dkms install .
+
+## Usage
+
+Either `modprobe vendor-reset` or add the device to the appropriate place to
+load it at system boot, such as `/etc/modules` (Debian). Consult your
+distribution's documentation as to the best way to perform this.
+
+## Supported Devices
+
+| Vendor | Family | Common Name(s)
+|---|---|---|
+|AMD|Polaris 10|
+|AMD|Polaris 11|
+|AMD|Polaris 12|
+|AMD|Vega 10| Vega 56/64 |
+|AMD|Vega 20| Radeon VII |
+|AMD|Navi 10| 5600XT, 5700, 5700XT
+|AMD|Navi 12| Pro 5600M |
+|AMD|Navi 14| Pro 5300, RX 5300
+
+## Developing
 
 If you are a vendor intending to add support for your device to this project
 please first consider two things:
@@ -16,6 +53,7 @@ please first consider two things:
 1. Can you fix your hardware/firmware to reset correctly using FLR or a BUS
    reset?
 2. Is the reset simple enough that it should really be a kernel pci quirk
-   (see: pci_quirk.c)?
+   (see: kernel/drivers/pci/quirk.c)?
 
 If you answer yes to either of these questions this project is not for you.
+
