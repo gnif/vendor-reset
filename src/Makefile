@@ -1,6 +1,6 @@
 vendor-reset-y += \
-	src/vendor-reset.o \
-	src/vendor-reset-dev.o\
+	src/vendor-reset-dev.o \
+	src/ioctl.o \
 	src/ftrace.o \
 	src/hooks.o
 
