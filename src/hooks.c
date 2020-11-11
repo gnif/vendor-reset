@@ -30,7 +30,7 @@ static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
 {
   int ret;
   struct vendor_reset_cfg *cfg;
-  struct vendor_reset_dev vdev;
+  struct vendor_reset_dev vdev = {0};
 
   ret = orig_pci_dev_specific_reset(dev, probe);
   if (!ret || ret != -ENOTTY)
