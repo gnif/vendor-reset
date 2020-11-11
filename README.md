@@ -43,7 +43,7 @@ distribution's documentation as to the best way to perform this.
 |AMD|Vega 20| Radeon VII |
 |AMD|Navi 10| 5600XT, 5700, 5700XT
 |AMD|Navi 12| Pro 5600M |
-|AMD|Navi 14| Pro 5300, RX 5300
+|AMD|Navi 14| Pro 5300, RX 5300, 5500XT
 
 ## Developing
 
