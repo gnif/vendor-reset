@@ -44,7 +44,7 @@ static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
   struct vendor_reset_cfg *entry = vendor_reset_devices;
   struct pci_dev * pcidev;
   int ret;
-  struct vendor_reset_dev vdev;
+  struct vendor_reset_dev vdev = {0};
 
   if (copy_from_user(&dev, (void __user *)arg, sizeof(dev)))
     return -EFAULT;
