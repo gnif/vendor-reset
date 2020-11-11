@@ -59,10 +59,7 @@ long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
   /* expose return code to cleanup */
   ret = vdev.reset_ret = cfg->ops->reset(&vdev);
   if (ret)
-  {
     pci_warn(dev, "Failed to reset device\n");
-    return ret;
-  }
 
   if (cfg->ops->post_reset)
     ret = cfg->ops->post_reset(&vdev);
