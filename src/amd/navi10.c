@@ -120,7 +120,7 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
                           (smnMP1_FIRMWARE_FLAGS & 0xffffffff)) &
               MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
              MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT;
-  psp_bl_ready = !!(RREG32(mmMP0_SMN_C2PMSG_35) & 0x80000000L);
+  psp_bl_ready = !!(RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L);
   nv_info("SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s\n",
           smu_resp, sol, mp1_intr ? "yes" : "no",
           psp_bl_ready ? "yes" : "no");
