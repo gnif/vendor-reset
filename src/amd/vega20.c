@@ -26,12 +26,15 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "thm_11_0_2_sh_mask.h"
 #include "mp_9_0_offset.h"
 #include "mp_9_0_sh_mask.h"
+#include "hdp_4_0_offset.h"
+#include "hdp_4_0_sh_mask.h"
 #include "common.h"
 
 #include "soc15.h"
 #include "soc15_common.h"
 #include "common_baco.h"
 #include "vega20_ppsmc.h"
+#include "psp_gfx_if.h"
 
 static const struct soc15_baco_cmd_entry clean_baco_tbl[] =
 {
@@ -85,6 +88,34 @@ static int vega20_baco_set_state(struct amd_fake_dev *adev, enum BACO_STATE stat
   return 0;
 }
 
+static int amd_vega20_mode1_reset(struct amd_fake_dev *adev)
+{
+  int ret;
+  uint32_t offset;
+
+  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64);
+  ret = psp_wait_for(adev, offset, 0x80000000, 0x8000FFFF, false);
+  if (ret)
+  {
+    pci_warn(adev->pdev, "vega20: psp not working for mode1 reset\n");
+    return ret;
+  }
+
+  WREG32(offset, GFX_CTRL_CMD_ID_MODE1_RST);
+  msleep(500);
+  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_33);
+  ret = psp_wait_for(adev, offset, 0x80000000, 0x80000000, false);
+
+  if (ret)
+  {
+    pci_warn(adev->pdev, "vega20: psp mode1 reset failed\n");
+    return ret;
+  }
+
+  pci_info(adev->pdev, "vega20: psp mode1 reset succeeded\n");
+  return ret;
+}
+
 static int amd_vega20_reset(struct vendor_reset_dev *dev)
 {
   struct amd_vendor_private *priv = amd_private(dev);
@@ -126,6 +157,16 @@ static int amd_vega20_reset(struct vendor_reset_dev *dev)
     goto free_adev;
   }
 
+  /* first try a mode1 psp reset */
+  amdgpu_atombios_scratch_regs_engine_hung(adev, true);
+  ret = amd_vega20_mode1_reset(adev);
+  if (!ret)
+  {
+    amdgpu_atombios_scratch_regs_engine_hung(adev, false);
+    goto free_adev;
+  }
+
+  pci_info(dev->pdev, "vega20: falling back to BACO reset\n");
   ret = vega20_baco_set_state(adev, BACO_STATE_IN);
   if (ret)
   {
