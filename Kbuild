@@ -7,4 +7,4 @@ ccflags-y += \
   -I$(src)/include -g
 ldflags-$(CONFIG_DEBUG) += -g
 
-subdir-y += userspace/
+#subdir-y += userspace/
