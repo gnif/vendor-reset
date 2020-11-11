@@ -58,8 +58,8 @@ struct vendor_reset_cfg
 };
 
 /* search the device table for the specified vendor and device id and return it */
-struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor, unsigned
-  int device);
+struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
+  unsigned int device);
 
 /* perform the device reset */
 long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev);

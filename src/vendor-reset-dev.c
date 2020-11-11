@@ -20,8 +20,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "vendor-reset-dev.h"
 #include "device-db.h"
 
-struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor, unsigned
-  int device)
+struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
+  unsigned int device)
 {
   struct vendor_reset_cfg * cfg;
 
