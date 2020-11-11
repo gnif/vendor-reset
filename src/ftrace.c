@@ -34,9 +34,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
  */
 static int resolve_hook_address(struct ftrace_hook *hook)
 {
-  struct kprobe kp;
+  struct kprobe kp = { .symbol_name = hook->name };
 
-  kp.symbol_name = hook->name;
   if (register_kprobe(&kp))
   {
     pr_warn("unresolved symbol %s\n", hook->name);
