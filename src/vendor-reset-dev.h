@@ -63,5 +63,6 @@ struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
 
 /* perform the device reset */
 long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
+long vendor_reset_dev(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
 
 #endif

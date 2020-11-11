@@ -69,3 +69,31 @@ long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
 
   return ret;
 }
+
+long vendor_reset_dev(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
+{
+  int ret;
+
+  if (!pci_cfg_access_trylock(dev))
+  {
+    pci_warn(dev, "Could not acquire cfg lock\n");
+    ret = -EAGAIN;
+    goto err;
+  }
+
+  if (!device_trylock(&dev->dev))
+  {
+    pci_warn(dev, "Could not acquire device lock\n");
+    ret = -EAGAIN;
+    goto unlock;
+  }
+
+  ret = vendor_reset_dev_locked(cfg, dev);
+  device_unlock(&dev->dev);
+
+unlock:
+  pci_cfg_access_unlock(dev);
+
+err:
+  return ret;
+}

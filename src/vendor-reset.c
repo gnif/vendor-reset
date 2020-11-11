@@ -38,47 +38,29 @@ module_param(install_hook, bool, 0);
 
 static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 {
-  struct vendor_reset_ioctl dev;
+  struct vendor_reset_ioctl iodev;
   struct vendor_reset_cfg *cfg;
-  struct pci_dev * pcidev;
+  struct pci_dev * dev;
   int ret;
 
-  if (copy_from_user(&dev, (void __user *)arg, sizeof(dev)))
+  if (copy_from_user(&iodev, (void __user *)arg, sizeof(iodev)))
     return -EFAULT;
 
-  pcidev = pci_get_domain_bus_and_slot(dev.domain, dev.bus, dev.devfn);
-  if (!pcidev)
+  dev = pci_get_domain_bus_and_slot(iodev.domain, iodev.bus, iodev.devfn);
+  if (!dev)
     return -ENODEV;
 
-  cfg = vendor_reset_cfg_find(pcidev->vendor, pcidev->device);
+  cfg = vendor_reset_cfg_find(dev->vendor, dev->device);
   if (!cfg)
   {
     ret = -EOPNOTSUPP;
     goto err;
   }
 
-  /* we probably always want to lock the device */
-  if (!pci_cfg_access_trylock(pcidev))
-  {
-    pci_warn(pcidev, "Could not acquire cfg lock\n");
-    ret = -EAGAIN;
-    goto err;
-  }
+  ret = vendor_reset_dev(cfg, dev);
 
-  if (!device_trylock(&pcidev->dev))
-  {
-    pci_warn(pcidev, "Could not acquire device lock\n");
-    ret = -EAGAIN;
-    goto unlock;
-  }
-
-  ret = vendor_reset_dev_locked(cfg, pcidev);
-  device_unlock(&pcidev->dev);
-
-unlock:
-  pci_cfg_access_unlock(pcidev);
 err:
-  pci_dev_put(pcidev);
+  pci_dev_put(dev);
   return ret;
 }
 
