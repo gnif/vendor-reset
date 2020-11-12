@@ -1,4 +1,5 @@
 vendor-reset-y += \
+	src/module.o \
 	src/vendor-reset-dev.o \
 	src/ioctl.o \
 	src/ftrace.o \

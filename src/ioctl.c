@@ -17,24 +17,12 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include <linux/module.h>
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
-#include <linux/highmem.h>
-#include <linux/pci.h>
-
 #include "vendor-reset-dev.h"
 #include "vendor-reset-ioctl.h"
 
-#include "ftrace.h"
-#include "hooks.h"
+#include <linux/miscdevice.h>
 
-#define VENDOR_RESET_DEVNAME "vendor_reset"
-
-#define vr_info(fmt, args...) pr_info("vendor-reset: " fmt, ##args)
-
-static bool install_hook = true;
-module_param(install_hook, bool, 0);
+#define VENDOR_RESET_IOCTL_DEVNAME "vendor_reset"
 
 static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 {
@@ -83,7 +71,7 @@ static long vendor_reset_ioctl(struct file * filp, unsigned int ioctl,
   return ret;
 }
 
-static const struct file_operations vendor_reset_fops =
+static const struct file_operations vendor_reset_ioctl_fops =
 {
   .owner          = THIS_MODULE,
   .unlocked_ioctl = vendor_reset_ioctl,
@@ -92,48 +80,19 @@ static const struct file_operations vendor_reset_fops =
 #endif
 };
 
-static struct miscdevice vendor_reset_misc =
+static struct miscdevice vendor_reset_ioctl_misc =
 {
   .minor = MISC_DYNAMIC_MINOR,
-  .name  = VENDOR_RESET_DEVNAME,
-  .fops  = &vendor_reset_fops
+  .name  = VENDOR_RESET_IOCTL_DEVNAME,
+  .fops  = &vendor_reset_ioctl_fops
 };
 
-static int __init vendor_reset_init(void)
+int vendor_reset_ioctl_init(void)
 {
-  int ret;
-
-  ret = misc_register(&vendor_reset_misc);
-  if (ret)
-    return ret;
-
-  if (install_hook)
-  {
-    ret = fh_install_hooks(fh_hooks);
-    if (ret)
-      goto err;
-
-    vr_info("Hooks installed successfully\n");
-  }
-
-  return 0;
-
-err:
-  misc_deregister(&vendor_reset_misc);
-  return ret;
+  return misc_register(&vendor_reset_ioctl_misc);
 }
 
-static void __exit vendor_reset_exit(void)
+void vendor_reset_ioctl_exit(void)
 {
-  if (install_hook)
-    fh_remove_hooks(fh_hooks);
-
-  misc_deregister(&vendor_reset_misc);
+  misc_deregister(&vendor_reset_ioctl_misc);
 }
-
-module_init(vendor_reset_init);
-module_exit(vendor_reset_exit);
-
-MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Geoffrey McRae <geoff@hostfission.com>");
-MODULE_AUTHOR("Adam Madsen <adam@ajmadsen.com>");
