@@ -20,7 +20,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/module.h>
 
 #include "ioctl.h"
-#include "hooks.h"
+#include "hook.h"
 
 static int __init vendor_reset_init(void)
 {
