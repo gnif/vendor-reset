@@ -17,11 +17,10 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#ifndef __VENDOR_RESET_HOOKS_H__
-#define __VENDOR_RESET_HOOKS_H__
+#ifndef __VENDOR_RESET_HOOK_H__
+#define __VENDOR_RESET_HOOK_H__
 
-#include <linux/types.h>
-
-extern struct ftrace_hook fh_hooks[];
+long vendor_reset_hook_init(void);
+void vendor_reset_hook_exit(void);
 
 #endif

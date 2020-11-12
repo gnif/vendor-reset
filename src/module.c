@@ -20,12 +20,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/module.h>
 
 #include "ioctl.h"
-#include "ftrace.h"
 #include "hooks.h"
-
-#define vr_info(fmt, args...) pr_info("vendor-reset: " fmt, ##args)
-
-static bool install_hook = true;
 
 static int __init vendor_reset_init(void)
 {
@@ -35,14 +30,9 @@ static int __init vendor_reset_init(void)
   if (ret)
     return ret;
 
-  if (install_hook)
-  {
-    ret = fh_install_hooks(fh_hooks);
-    if (ret)
-      goto err;
-
-    vr_info("hooks installed\n");
-  }
+  ret = vendor_reset_hook_init();
+  if (ret)
+    goto err;
 
   return 0;
 
@@ -53,15 +43,12 @@ err:
 
 static void __exit vendor_reset_exit(void)
 {
-  if (install_hook)
-    fh_remove_hooks(fh_hooks);
-
+  vendor_reset_hook_exit();
   vendor_reset_ioctl_exit();
 }
 
 module_init(vendor_reset_init);
 module_exit(vendor_reset_exit);
-module_param(install_hook, bool, 0);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Geoffrey McRae <geoff@hostfission.com>");

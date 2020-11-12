@@ -3,6 +3,6 @@ vendor-reset-y += \
 	src/vendor-reset-dev.o \
 	src/ioctl.o \
 	src/ftrace.o \
-	src/hooks.o
+	src/hook.o
 
 ccflags-y += -I$(src)/src

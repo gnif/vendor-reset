@@ -17,12 +17,19 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include "vendor-reset-dev.h"
+#include "hook.h"
 #include "ftrace.h"
-#include "hooks.h"
+#include "vendor-reset-dev.h"
 
+#include <linux/module.h>
+
+#define vr_info(fmt, args...) pr_info("vendor-reset-hook: " fmt, ##args)
+#define vr_warn(fmt, args...) pr_warn("vendor-reset-hook: " fmt, ##args)
+
+static bool install_hook = true;
+module_param(install_hook, bool, 0);
+
+static bool hook_installed = false;
 static int (*orig_pci_dev_specific_reset)(struct pci_dev *dev, int probe);
 
 static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
@@ -42,6 +49,34 @@ static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
 }
 
 struct ftrace_hook fh_hooks[] = {
-    HOOK("pci_dev_specific_reset", &orig_pci_dev_specific_reset, hooked_pci_dev_specific_reset),
-    {0},
+  HOOK("pci_dev_specific_reset", &orig_pci_dev_specific_reset, hooked_pci_dev_specific_reset),
+  {0},
 };
+
+long vendor_reset_hook_init(void)
+{
+  int ret = 0;
+
+  if (install_hook)
+  {
+     ret = fh_install_hooks(fh_hooks);
+     if (ret)
+       vr_warn("install failed");
+     else
+     {
+       vr_info("installed");
+       hook_installed = true;
+     }
+  }
+
+  return ret;
+}
+
+void vendor_reset_hook_exit(void)
+{
+  if (hook_installed)
+  {
+    fh_remove_hooks(fh_hooks);
+    hook_installed = false;
+  }
+}
