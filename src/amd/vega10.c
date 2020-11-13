@@ -25,7 +25,9 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "vega10_inc.h"
 #include "vega10_ppsmc.h"
 #include "vendor-reset-dev.h"
+#include "firmware.h"
 #include "common.h"
+#include "compat.h"
 #include "common_baco.h"
 
 /* MP Apertures, from smu9_smumgr.c */
@@ -36,7 +38,13 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #define smnMP1_FIRMWARE_FLAGS 0x3010028
 
+static const char *log_prefix = "vega10";
+#define nv_info(fmt, arg...) pci_info(dev->pdev, "%s: " fmt, log_prefix, ##arg)
+#define nv_warn(fmt, arg...) pci_warn(dev->pdev, "%s: " fmt, log_prefix, ##arg)
+#define nv_err(fmt, arg...) pci_err(dev->pdev, "%s: " fmt, log_prefix, ##arg)
+
 extern int vega10_reg_base_init(struct amd_fake_dev *adev);
+extern bool amdgpu_get_bios(struct amd_fake_dev *adev);
 
 /* drivers/gpu/drm/amd/powerplay/hwmgr/vega10_baco.c */
 static const struct soc15_baco_cmd_entry pre_baco_tbl[] = {
@@ -127,7 +135,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   struct amd_vendor_private *priv = amd_private(dev);
   struct amd_fake_dev *adev;
   int ret = 0, timeout;
-  u32 sol, smu_resp, mp1_intr, psp_bl_ready;
+  u32 sol, smu_resp, mp1_intr, psp_bl_ready, features_mask;
   enum BACO_STATE baco_state;
 
   adev = &priv->adev;
@@ -138,6 +146,20 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   ret = vega10_reg_base_init(&priv->adev);
   if (ret)
     goto free_adev;
+
+  if (!amdgpu_get_bios(adev))
+  {
+    nv_err("amdgpu_get_bios failed: %d\n", ret);
+    ret = -ENOTSUPP;
+    goto free_adev;
+  }
+
+  ret = atom_bios_init(adev);
+  if (ret)
+  {
+    nv_err("atom_bios_init failed: %d\n", ret);
+    goto free_adev;
+  }
 
   /* it's important we wait for the SOC to be ready */
   for (timeout = 100000; timeout; --timeout)
@@ -176,6 +198,74 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   if (!sol)
     goto free_adev;
 
+  /* disable smu features */
+  ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_GetEnabledSmuFeatures, 0, &features_mask);
+  if (ret)
+  {
+    nv_warn("Could not get enabled SMU features, trying BACO reset anyway [ret %d]\n", ret);
+    goto baco_reset;
+  }
+
+  /*
+   * Based on the following observed sequence:
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00800000	ret=          	features=GNLD_FW_CTF
+   * ...
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00010000	ret=          	features=GNLD_THERMAL
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00004000	ret=          	features=GNLD_PPT
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00008000	ret=          	features=GNLD_TDC
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x08000000	ret=          	features=GNLD_DIDT
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x01000000	ret=          	features=GNLD_LED_DISPLAY
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x0000030f	ret=          	features=GNLD_DPM_PREFETCHER|GNLD_DPM_GFXCLK|GNLD_DPM_UCLK|GNLD_DPM_SOCCLK|GNLD_DPM_LINK|GNLD_DPM_DCEFCLK
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00000400	ret=          	features=GNLD_AVFS
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00000800	ret=          	features=GNLD_DS_GFXCLK
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00001000	ret=          	features=GNLD_DS_SOCCLK
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00002000	ret=          	features=GNLD_DS_LCLK
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00080000	ret=          	features=GNLD_DS_DCEFCLK
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00000040	ret=          	features=GNLD_ULV
+   * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x10000000	ret=          	features=GNLD_ACG
+   * cmd=PPSMC_MSG_GfxDeviceDriverReset          	param=0x00000002	ret=
+   */
+
+  nv_info("Disabling features\n");
+  if (features_mask & 0x00800000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00800000, NULL);
+  if (features_mask & 0x00010000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00010000, NULL);
+  if (features_mask & 0x00004000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00004000, NULL);
+  if (features_mask & 0x00008000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00008000, NULL);
+  if (features_mask & 0x08000000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x08000000, NULL);
+  if (features_mask & 0x01000000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x01000000, NULL);
+  if (features_mask & 0x0000030f)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x0000030f, NULL);
+  if (features_mask & 0x00000400)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00000400, NULL);
+  if (features_mask & 0x00000800)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00000800, NULL);
+  if (features_mask & 0x00001000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00001000, NULL);
+  if (features_mask & 0x00002000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00002000, NULL);
+  if (features_mask & 0x00080000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00080000, NULL);
+  if (features_mask & 0x00000040)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00000040, NULL);
+  if (features_mask & 0x10000000)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x10000000, NULL);
+
+  /* driver reset */
+  nv_info("Driver reset\n");
+  ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_GfxDeviceDriverReset, 0x2, NULL);
+  if (ret)
+    nv_warn("Could not reset w/ PPSMC_MSG_GfxDeviceDriverReset: %d\n", ret);
+
+  /* no reference for this, observed timing appears to be ~500ms */
+  msleep(500);
+
+baco_reset:
   if (baco_state == BACO_STATE_OUT)
   {
     pci_info(dev->pdev, "Vega10: Entering BACO\n");
@@ -194,7 +284,7 @@ free_adev:
 }
 
 const struct vendor_reset_ops amd_vega10_ops = {
-	.pre_reset = amd_common_pre_reset,
-	.reset = amd_vega10_reset,
-	.post_reset = amd_common_post_reset,
+  .pre_reset = amd_common_pre_reset,
+  .reset = amd_vega10_reset,
+  .post_reset = amd_common_post_reset,
 };
