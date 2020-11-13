@@ -20,6 +20,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef __VENDOR_RESET_FIRMWARE_H__
 #define __VENDOR_RESET_FIRMWARE_H__
 
+struct amd_fake_dev;
 int atom_bios_init(struct amd_fake_dev *adev);
 void atom_bios_fini(struct amd_fake_dev *adev);
 

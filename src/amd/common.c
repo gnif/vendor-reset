@@ -32,7 +32,7 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
 {
   struct amd_vendor_private *priv;
   struct pci_dev *pdev = dev->pdev;
-  int ret;
+  int ret, i;
 
   /* disable bus reset for the card, seems to be an issue with all of em */
   pdev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
@@ -58,6 +58,18 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
     goto err_free;
   }
 
+  for (i = 0; i < DEVICE_COUNT_RESOURCE; i++)
+  {
+    if (pci_resource_flags(pdev, i) & IORESOURCE_IO)
+    {
+      priv->rio_mem_size = pci_resource_len(pdev, i);
+      priv->rio_mem = pci_iomap(pdev, i, priv->rio_mem_size);
+      break;
+    }
+  }
+  if (!priv->rio_mem)
+    pci_warn(pdev, "Could not map I/O\n");
+
   pci_set_power_state(pdev, PCI_D0);
   pci_clear_master(pdev);
   pci_save_state(pdev);
@@ -80,6 +92,12 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
   if (priv->mmio) {
     iounmap(priv->mmio);
     priv->mmio = NULL;
+  }
+
+  if (priv->rio_mem)
+  {
+    pci_iounmap(pdev, priv->rio_mem);
+    priv->rio_mem = NULL;
   }
 
   if (priv->saved_state)

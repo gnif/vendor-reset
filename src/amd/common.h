@@ -108,6 +108,9 @@ struct amd_vendor_private
   resource_size_t mmio_base;
   resource_size_t mmio_size;
   uint32_t __iomem *mmio;
+
+  resource_size_t rio_mem_size;
+  uint32_t __iomem *rio_mem;
 };
 
 static inline struct amd_vendor_private *adev_to_amd_private(struct amd_fake_dev *adev)
