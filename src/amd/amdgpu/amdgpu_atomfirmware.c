@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include <drm/drm_print.h>
+//#include <drm/drm_print.h>
 
 #include "atomfirmware.h"
 #include "amdgpu_atomfirmware.h"

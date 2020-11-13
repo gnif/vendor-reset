@@ -33,7 +33,7 @@
 #include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/types.h>
-#include <drm/drm_print.h>
+//#include <drm/drm_print.h>
 /*
  * BIOS.
  */

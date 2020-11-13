@@ -23,6 +23,12 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/kernel.h>
 #include "vendor-reset-dev.h"
 
+/* these are to remove the dependency on DRM */
+#define DRM_INFO(fmt, args...) pr_info("vendor-reset-drm: " fmt, ##args)
+#define DRM_ERROR(fmt, args...) pr_err("vendor-reset-drm: " fmt, ##args)
+#define DRM_DEBUG(fmt, args...) pr_debug("vendor-reset-drm: " fmt, ##args)
+
+
 #define RREG32(reg)                                                          \
   ({                                                                         \
     u32 __out;                                                               \
