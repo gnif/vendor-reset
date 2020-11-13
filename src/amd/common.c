@@ -48,10 +48,6 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
   dev->vendor_private = priv;
   priv->vdev = dev;
 
-  spin_lock_init(&priv->pcie_lock);
-  spin_lock_init(&priv->reg_lock);
-  mutex_init(&priv->smu_lock);
-
   priv->mmio_base = pci_resource_start(pdev, 5);
   priv->mmio_size = pci_resource_len(pdev, 5);
   priv->mmio = ioremap(priv->mmio_base, priv->mmio_size);
@@ -99,7 +95,6 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
 
   kfree(priv);
   dev->vendor_private = NULL;
-  mutex_destroy(&priv->smu_lock);
 
   return 0;
 }
@@ -123,8 +118,6 @@ int smu_wait(struct amd_fake_dev *adev)
 int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg, uint32_t parameter, uint32_t *resp)
 {
   int ret = 0;
-
-  mutex_lock(&adev_to_amd_private(adev)->smu_lock);
 
   ret = smu_wait(adev);
   if (ret != 0x1)
@@ -151,7 +144,6 @@ int smum_send_msg_to_smc_with_parameter(struct amd_fake_dev *adev, uint16_t msg,
   ret = ret != 0x01;
 
 out:
-  mutex_unlock(&adev_to_amd_private(adev)->smu_lock);
   return ret;
 }
 

@@ -36,11 +36,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
       __out = readl(adev_to_amd_private(adev)->mmio + (reg));                \
     else                                                                     \
     {                                                                        \
-      unsigned long __flags;                                                 \
-      spin_lock_irqsave(&adev_to_amd_private(adev)->reg_lock, __flags);      \
       writel((reg), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
       __out = readl(adev_to_amd_private(adev)->mmio + mmMM_DATA);            \
-      spin_unlock_irqrestore(&adev_to_amd_private(adev)->reg_lock, __flags); \
     }                                                                        \
     __out;                                                                   \
   })
@@ -52,35 +49,26 @@ Place, Suite 330, Boston, MA 02111-1307 USA
       writel(v, adev_to_amd_private(adev)->mmio + (reg));                    \
     else                                                                     \
     {                                                                        \
-      unsigned long __flags;                                                 \
-      spin_lock_irqsave(&adev_to_amd_private(adev)->reg_lock, __flags);      \
       writel((reg), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
       writel(v, adev_to_amd_private(adev)->mmio + mmMM_DATA);                \
-      spin_unlock_irqrestore(&adev_to_amd_private(adev)->reg_lock, __flags); \
     }                                                                        \
   } while (0)
 
 #define WREG32_PCIE(reg, v)                                                 \
   do                                                                        \
   {                                                                         \
-    unsigned long __flags;                                                  \
-    spin_lock_irqsave(&adev_to_amd_private(adev)->pcie_lock, __flags);      \
     WREG32(mmPCIE_INDEX2, reg);                                             \
     (void)RREG32(mmPCIE_INDEX2);                                            \
     WREG32(mmPCIE_DATA2, v);                                                \
     (void)RREG32(mmPCIE_DATA2);                                             \
-    spin_unlock_irqrestore(&adev_to_amd_private(adev)->pcie_lock, __flags); \
   } while (0)
 
 #define RREG32_PCIE(reg)                                                    \
   ({                                                                        \
-    unsigned long __flags;                                                  \
     u32 __tmp_read;                                                         \
-    spin_lock_irqsave(&adev_to_amd_private(adev)->pcie_lock, __flags);      \
     WREG32(mmPCIE_INDEX2, reg);                                             \
     (void)RREG32(mmPCIE_INDEX2);                                            \
     __tmp_read = RREG32(mmPCIE_DATA2);                                      \
-    spin_unlock_irqrestore(&adev_to_amd_private(adev)->pcie_lock, __flags); \
     __tmp_read;                                                             \
   })
 
@@ -120,10 +108,6 @@ struct amd_vendor_private
   resource_size_t mmio_base;
   resource_size_t mmio_size;
   uint32_t __iomem *mmio;
-
-  spinlock_t pcie_lock;
-  spinlock_t reg_lock;
-  struct mutex smu_lock;
 };
 
 static inline struct amd_vendor_private *adev_to_amd_private(struct amd_fake_dev *adev)
