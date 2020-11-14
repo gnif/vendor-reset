@@ -202,7 +202,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     goto baco_reset;
   }
 
-  nv_info("Enabled features: %x\n", features_mask);
+  vr_info(dev, "enabled features: %x\n", features_mask);
 
   /*
    * Based on the following observed sequence:
@@ -222,7 +222,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
    * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00000040	ret=          	features=GNLD_ULV
    * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x10000000	ret=          	features=GNLD_ACG
    * cmd=PPSMC_MSG_GfxDeviceDriverReset          	param=0x00000002	ret=
-   * 
+   *
    * However, this sequence bricks the card after shutting down Windows,
    * so instead we'll mask the difference between the macOS shutdown feature
    * list (0x1bb9ff1f) and the Windows shutdown feature list (0x1320070f),
