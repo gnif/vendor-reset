@@ -19,6 +19,19 @@ allowing it to handle device resets directly without patching the running
 kernel. Simply modprobing the module is enough to enable the reset routines for
 all supported hardware.
 
+## Requirements
+
+Ensure your kernel has the following options enabled:
+
+```
+CONFIG_FTRACE=y
+CONFIG_KPROBLES=y
+CONFIG_PCI_QUIRKS=y
+CONFIG_KALLSYMS=y
+CONFIG_KALLSYMS_ALL=y
+CONFIG_FUNCTION_TRACER=y
+```
+
 ## Installing
 
 This module can be installed either using the standard `make`, `make install`
