@@ -25,7 +25,7 @@ Ensure your kernel has the following options enabled:
 
 ```
 CONFIG_FTRACE=y
-CONFIG_KPROBLES=y
+CONFIG_KPROBES=y
 CONFIG_PCI_QUIRKS=y
 CONFIG_KALLSYMS=y
 CONFIG_KALLSYMS_ALL=y
