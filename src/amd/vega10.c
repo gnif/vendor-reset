@@ -206,6 +206,8 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     goto baco_reset;
   }
 
+  nv_info("Enabled features: %x\n", features_mask);
+
   /*
    * Based on the following observed sequence:
    * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00800000	ret=          	features=GNLD_FW_CTF
@@ -224,6 +226,11 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
    * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x00000040	ret=          	features=GNLD_ULV
    * cmd=PPSMC_MSG_DisableSmuFeatures            	param=0x10000000	ret=          	features=GNLD_ACG
    * cmd=PPSMC_MSG_GfxDeviceDriverReset          	param=0x00000002	ret=
+   * 
+   * However, this sequence bricks the card after shutting down Windows,
+   * so instead we'll mask the difference between the macOS shutdown feature
+   * list (0x1bb9ff1f) and the Windows shutdown feature list (0x1320070f),
+   * using the above sequence as ordering for the bits remaining.
    */
 
   nv_info("Disabling features\n");
@@ -237,12 +244,8 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00008000, NULL);
   if (features_mask & 0x08000000)
     smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x08000000, NULL);
-  if (features_mask & 0x01000000)
-    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x01000000, NULL);
-  if (features_mask & 0x0000030f)
-    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x0000030f, NULL);
-  if (features_mask & 0x00000400)
-    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00000400, NULL);
+  if (features_mask & 0x00000010)
+    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00000010, NULL);
   if (features_mask & 0x00000800)
     smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00000800, NULL);
   if (features_mask & 0x00001000)
@@ -251,10 +254,6 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00002000, NULL);
   if (features_mask & 0x00080000)
     smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00080000, NULL);
-  if (features_mask & 0x00000040)
-    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00000040, NULL);
-  if (features_mask & 0x10000000)
-    smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x10000000, NULL);
 
   /* driver reset */
   nv_info("Driver reset\n");
