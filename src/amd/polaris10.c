@@ -73,7 +73,8 @@ static int amd_polaris10_reset(struct vendor_reset_dev *vdev)
 }
 
 const struct vendor_reset_ops amd_polaris10_ops = {
-    .pre_reset = amd_common_pre_reset,
-    .reset = amd_polaris10_reset,
-    .post_reset = amd_common_post_reset,
+  .version = {1, 0},
+  .pre_reset = amd_common_pre_reset,
+  .reset = amd_polaris10_reset,
+  .post_reset = amd_common_post_reset,
 };

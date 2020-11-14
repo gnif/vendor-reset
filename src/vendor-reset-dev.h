@@ -32,8 +32,16 @@ struct vendor_reset_dev
   void *vendor_private;
 };
 
+struct vendor_reset_ver
+{
+  unsigned int major;
+  unsigned int minor;
+};
+
 struct vendor_reset_ops
 {
+  /* version of the reset operations for logging */
+  const struct vendor_reset_ver version;
   /* any pre-reset ops to do, i.e., common code between devices */
   int (*pre_reset)(struct vendor_reset_dev *);
   /* the reset method for the device at the specified address */
