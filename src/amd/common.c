@@ -41,6 +41,9 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
   struct pci_dev *pdev = dev->pdev;
   int ret, i;
 
+  /* disable bus reset for the card, seems to be an issue with all of them */
+  dev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
+
   /* do not try to reset the card under amdgpu, it will cause problems */
   if (pdev->driver && !strcmp(pdev->driver->name, "amdgpu"))
     return -ENOTTY;
