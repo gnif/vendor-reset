@@ -17,6 +17,8 @@ this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
+#include "vendor-reset-dev.h"
+
 #include <linux/delay.h>
 
 #include "bif/bif_4_1_d.h"
@@ -32,7 +34,7 @@ static int vi_gpu_pci_config_reset(struct amd_fake_dev *adev)
 {
   u32 i;
 
-  dev_info(adev->dev, "GPU pci config reset\n");
+  vr_info(adev->vdev, "GPU pci config reset\n");
 
   /* reset */
   pci_write_config_dword(adev->pdev, 0x7c, AMDGPU_ASIC_RESET_DATA);

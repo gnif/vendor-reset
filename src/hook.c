@@ -23,9 +23,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <linux/module.h>
 
-#define vr_info(fmt, args...) pr_info("vendor-reset-hook: " fmt, ##args)
-#define vr_warn(fmt, args...) pr_warn("vendor-reset-hook: " fmt, ##args)
-
 static bool install_hook = true;
 module_param(install_hook, bool, 0);
 
@@ -61,10 +58,10 @@ long vendor_reset_hook_init(void)
   {
      ret = fh_install_hooks(fh_hooks);
      if (ret)
-       vr_warn("install failed");
+       pr_warn("vendor_reset_hook: install failed");
      else
      {
-       vr_info("installed");
+       pr_info("vendor_reset_hook: installed");
        hook_installed = true;
      }
   }

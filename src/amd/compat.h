@@ -78,6 +78,7 @@ struct amd_fake_dev
   struct card_info card_info;
   struct atom_context *atom_context;
 
+  struct vendor_reset_dev *vdev;
   struct pci_dev *pdev;
   struct device *dev;
 };

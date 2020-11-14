@@ -22,8 +22,11 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <linux/pci.h>
 
+struct vendor_reset_cfg;
+
 struct vendor_reset_dev
 {
+  struct vendor_reset_cfg *cfg;
   struct pci_dev *pdev;
   unsigned long info;
 
@@ -63,6 +66,9 @@ struct vendor_reset_cfg
 
   /* device type for combined ops */
   unsigned long info;
+
+  /* device type string for print */
+  const char * info_str;
 };
 
 /* search the device table for the specified vendor and device id and return it */
@@ -72,5 +78,17 @@ struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
 /* perform the device reset */
 long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
 long vendor_reset_dev(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
+
+#define vr_info(vdev, fmt, arg...) \
+  pci_info ((vdev)->pdev, "%s: " fmt, (vdev)->cfg->info_str, ##arg)
+
+#define vr_warn(vdev, fmt, arg...)  \
+  pci_warn ((vdev)->pdev, "%s: " fmt, (vdev)->cfg->info_str, ##arg)
+
+#define vr_err(vdev, fmt, arg...) \
+  pci_err  ((vdev)->pdev, "%s: " fmt, (vdev)->cfg->info_str, ##arg)
+
+#define vr_debug(vdev, fmt, arg...) \
+  pci_debug((vdev)->pdev, "%s: " fmt, (vdev)->cfg->info_str, ##arg)
 
 #endif

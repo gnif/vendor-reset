@@ -25,6 +25,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 int amd_fake_dev_init(struct amd_fake_dev *adev, struct vendor_reset_dev *vdev)
 {
+  adev->vdev = vdev;
   adev->pdev = vdev->pdev;
   adev->dev = &vdev->pdev->dev;
 

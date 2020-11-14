@@ -44,10 +44,15 @@ long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
 {
   struct vendor_reset_dev vdev =
   {
+    .cfg  = cfg,
     .pdev = dev,
     .info = cfg->info
   };
   int ret;
+
+  vr_info(&vdev, "version %d.%d\n",
+      cfg->ops->version.major,
+      cfg->ops->version.minor);
 
   if (cfg->ops->pre_reset)
   {
@@ -59,7 +64,7 @@ long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
   /* expose return code to cleanup */
   ret = vdev.reset_ret = cfg->ops->reset(&vdev);
   if (ret)
-    pci_warn(dev, "Failed to reset device\n");
+    vr_warn(&vdev, "failed to reset device\n");
 
   if (cfg->ops->post_reset)
     ret = cfg->ops->post_reset(&vdev);
@@ -73,14 +78,14 @@ long vendor_reset_dev(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
 
   if (!pci_cfg_access_trylock(dev))
   {
-    pci_warn(dev, "Could not acquire cfg lock\n");
+    pci_warn(dev, "could not acquire cfg lock\n");
     ret = -EAGAIN;
     goto err;
   }
 
   if (!device_trylock(&dev->dev))
   {
-    pci_warn(dev, "Could not acquire device lock\n");
+    pci_warn(dev, "could not acquire device lock\n");
     ret = -EAGAIN;
     goto unlock;
   }

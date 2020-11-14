@@ -96,7 +96,7 @@ static int amd_vega20_mode1_reset(struct amd_fake_dev *adev)
   ret = psp_wait_for(adev, offset, 0x80000000, 0x8000FFFF, false);
   if (ret)
   {
-    pci_warn(adev->pdev, "vega20: psp not working for mode1 reset\n");
+    vr_warn(adev->vdev, "psp not working for mode1 reset\n");
     return ret;
   }
 
@@ -107,11 +107,11 @@ static int amd_vega20_mode1_reset(struct amd_fake_dev *adev)
 
   if (ret)
   {
-    pci_warn(adev->pdev, "vega20: psp mode1 reset failed\n");
+    vr_warn(adev->vdev, "psp mode1 reset failed\n");
     return ret;
   }
 
-  pci_info(adev->pdev, "vega20: psp mode1 reset succeeded\n");
+  vr_info(adev->vdev, "psp mode1 reset succeeded\n");
   return ret;
 }
 
@@ -144,7 +144,7 @@ static int amd_vega20_reset(struct vendor_reset_dev *dev)
   vega20_baco_get_state(adev, &baco_state);
   if (sol == ~1L && baco_state != BACO_STATE_IN)
   {
-    pci_warn(dev->pdev, "vega20: Timed out waiting for SOL to be valid\n");
+    vr_warn(dev, "Timed out waiting for SOL to be valid\n");
     ret = -EINVAL;
     goto free_adev;
   }
@@ -152,7 +152,7 @@ static int amd_vega20_reset(struct vendor_reset_dev *dev)
   /* if there's no sign of life we usually can't reset */
   if (!sol)
   {
-    pci_info(dev->pdev, "vega20: no SOL, not attempting BACO reset\n");
+    vr_info(dev, "no SOL, not attempting BACO reset\n");
     goto free_adev;
   }
 
@@ -165,22 +165,22 @@ static int amd_vega20_reset(struct vendor_reset_dev *dev)
     goto free_adev;
   }
 
-  pci_info(dev->pdev, "vega20: falling back to BACO reset\n");
+  vr_info(dev, "falling back to BACO reset\n");
   ret = vega20_baco_set_state(adev, BACO_STATE_IN);
   if (ret)
   {
-    pci_warn(dev->pdev, "vega20: enter BACO failed\n");
+    vr_warn(dev, "enter BACO failed\n");
     goto free_adev;
   }
 
   ret = vega20_baco_set_state(adev, BACO_STATE_OUT);
   if (ret)
   {
-    pci_warn(dev->pdev, "vega20: exit BACO failed\n");
+    vr_warn(dev, "exit BACO failed\n");
     goto free_adev;
   }
 
-  pci_info(dev->pdev, "vega20: BACO reset successful\n");
+  vr_info(dev, "BACO reset successful\n");
 
 free_adev:
   amd_fake_dev_fini(adev);

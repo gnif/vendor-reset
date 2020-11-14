@@ -18,6 +18,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include <linux/delay.h>
+
 #include "soc15.h"
 #include "soc15_hw_ip.h"
 #include "vega10_ip_offset.h"
@@ -37,11 +38,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #define MP1_SRAM 0x03c00004
 
 #define smnMP1_FIRMWARE_FLAGS 0x3010028
-
-static const char *log_prefix = "vega10";
-#define nv_info(fmt, arg...) pci_info(dev->pdev, "%s: " fmt, log_prefix, ##arg)
-#define nv_warn(fmt, arg...) pci_warn(dev->pdev, "%s: " fmt, log_prefix, ##arg)
-#define nv_err(fmt, arg...) pci_err(dev->pdev, "%s: " fmt, log_prefix, ##arg)
 
 extern int vega10_reg_base_init(struct amd_fake_dev *adev);
 extern bool amdgpu_get_bios(struct amd_fake_dev *adev);
@@ -149,7 +145,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
 
   if (!amdgpu_get_bios(adev))
   {
-    nv_err("amdgpu_get_bios failed: %d\n", ret);
+    vr_err(dev, "amdgpu_get_bios failed: %d\n", ret);
     ret = -ENOTSUPP;
     goto free_adev;
   }
@@ -157,7 +153,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   ret = atom_bios_init(adev);
   if (ret)
   {
-    nv_err("atom_bios_init failed: %d\n", ret);
+    vr_err(dev, "atom_bios_init failed: %d\n", ret);
     goto free_adev;
   }
 
@@ -170,7 +166,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     udelay(1);
   }
 
-  pci_info(dev->pdev, "Vega10: bus reset disabled? %s\n", (dev->pdev->dev_flags & PCI_DEV_FLAGS_NO_BUS_RESET) ? "yes" : "no");
+  vr_info(dev, "bus reset disabled? %s\n", (dev->pdev->dev_flags & PCI_DEV_FLAGS_NO_BUS_RESET) ? "yes" : "no");
 
   /* collect some info for logging for now */
   smu_resp = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
@@ -180,16 +176,16 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
              MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT;
   psp_bl_ready = !!(RREG32(mmMP0_SMN_C2PMSG_35) & 0x80000000L);
   smu9_baco_get_state(adev, &baco_state);
-  pci_info(
-      dev->pdev,
-      "Vega10: SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s, baco? %s\n",
+  vr_info(
+      dev,
+      "SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s, baco? %s\n",
       smu_resp, sol, mp1_intr ? "yes" : "no",
       psp_bl_ready ? "yes" : "no",
       baco_state == BACO_STATE_IN ? "on" : "off");
 
   if (sol == ~1L && baco_state != BACO_STATE_IN)
   {
-    pci_warn(dev->pdev, "Vega10: Timed out waiting for SOL to be valid\n");
+    vr_warn(dev, "timed out waiting for SOL to be valid\n");
     ret = -EINVAL;
     goto free_adev;
   }
@@ -202,7 +198,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_GetEnabledSmuFeatures, 0, &features_mask);
   if (ret)
   {
-    nv_warn("Could not get enabled SMU features, trying BACO reset anyway [ret %d]\n", ret);
+    vr_warn(dev, "could not get enabled SMU features, trying BACO reset anyway [ret %d]\n", ret);
     goto baco_reset;
   }
 
@@ -233,7 +229,7 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
    * using the above sequence as ordering for the bits remaining.
    */
 
-  nv_info("Disabling features\n");
+  vr_info(dev, "disabling features\n");
   if (features_mask & 0x00800000)
     smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00800000, NULL);
   if (features_mask & 0x00010000)
@@ -256,10 +252,10 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_DisableSmuFeatures, 0x00080000, NULL);
 
   /* driver reset */
-  nv_info("Driver reset\n");
+  vr_info(dev, "Driver reset\n");
   ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_GfxDeviceDriverReset, 0x2, NULL);
   if (ret)
-    nv_warn("Could not reset w/ PPSMC_MSG_GfxDeviceDriverReset: %d\n", ret);
+    vr_warn(dev, "Could not reset w/ PPSMC_MSG_GfxDeviceDriverReset: %d\n", ret);
 
   /* no reference for this, observed timing appears to be ~500ms */
   msleep(500);
@@ -267,13 +263,13 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
 baco_reset:
   if (baco_state == BACO_STATE_OUT)
   {
-    pci_info(dev->pdev, "Vega10: Entering BACO\n");
+    vr_info(dev, "entering BACO\n");
     ret = vega10_baco_set_state(adev, BACO_STATE_IN);
     if (ret)
       return ret;
   }
 
-  pci_info(dev->pdev, "Vega10: Exiting BACO\n");
+  vr_info(dev, "exiting BACO\n");
   ret = vega10_baco_set_state(adev, BACO_STATE_OUT);
 
 free_adev:

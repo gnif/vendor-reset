@@ -68,7 +68,7 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
     }
   }
   if (!priv->rio_mem)
-    pci_warn(pdev, "Could not map I/O\n");
+    vr_warn(dev, "Could not map I/O\n");
 
   pci_set_power_state(pdev, PCI_D0);
   pci_clear_master(pdev);
