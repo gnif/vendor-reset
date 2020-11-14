@@ -34,15 +34,16 @@ static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
   int ret;
   struct vendor_reset_cfg *cfg;
 
-  ret = orig_pci_dev_specific_reset(dev, probe);
+  cfg = vendor_reset_cfg_find(dev->vendor, dev->device);
+  if (!cfg)
+    goto do_orig;
+
+  ret = vendor_reset_dev_locked(cfg, dev);
   if (!ret || ret != -ENOTTY)
     return ret;
 
-  cfg = vendor_reset_cfg_find(dev->vendor, dev->device);
-  if (!cfg)
-    return -ENOTTY;
-
-  return vendor_reset_dev_locked(cfg, dev);
+do_orig:
+  return orig_pci_dev_specific_reset(dev, probe);
 }
 
 struct ftrace_hook fh_hooks[] = {
