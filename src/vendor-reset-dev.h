@@ -45,6 +45,8 @@ struct vendor_reset_ops
 {
   /* version of the reset operations for logging */
   const struct vendor_reset_ver version;
+  /* called when the kernel is probing for a working reset function */
+  int (*probe)(struct vendor_reset_cfg *, struct pci_dev *);
   /* any pre-reset ops to do, i.e., common code between devices */
   int (*pre_reset)(struct vendor_reset_dev *);
   /* the reset method for the device at the specified address */

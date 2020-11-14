@@ -28,14 +28,18 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "common.h"
 #include "compat.h"
 
+int amd_common_probe(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
+{
+  /* disable bus reset for the card, seems to be an issue with all of them */
+  dev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
+  return 0;
+}
+
 int amd_common_pre_reset(struct vendor_reset_dev *dev)
 {
   struct amd_vendor_private *priv;
   struct pci_dev *pdev = dev->pdev;
   int ret, i;
-
-  /* disable bus reset for the card, seems to be an issue with all of em */
-  pdev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
 
   /* do not try to reset the card under amdgpu, it will cause problems */
   if (pdev->driver && !strcmp(pdev->driver->name, "amdgpu"))
