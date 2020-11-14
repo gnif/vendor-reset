@@ -163,22 +163,8 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
    */
   if (mp1_intr)
   {
-    smu_wait(adev);
-
-    /* disallowgfx_off or something */
-    vr_info(dev, "gfx off\n");
-    WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0x00);
-    WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82, 0x00);
-    WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_66, 0x2A);
-    smu_wait(adev);
-
-    /* stop SMC */
-    vr_info(dev, "Prep Reset\n");
-    WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0x00);
-    WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82, 0x00);
-    /* PPSMC_MSG_PrepareMp1ForReset */
-    WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_66, 0x33);
-    smu_wait(adev);
+    smum_send_msg_to_smc(adev, PPSMC_MSG_DisallowGfxOff, NULL);
+    smum_send_msg_to_smc(adev, PPSMC_MSG_PrepareMp1ForReset, NULL);
   }
 
   vr_info(dev, "begin psp mode 1 reset\n");
@@ -187,19 +173,16 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   pci_save_state(dev->pdev);
 
   /* check validity of PSP before reset */
-  vr_info(dev, "PSP wait\n");
   offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64);
   tmp = psp_wait_for(adev, offset, 0x80000000, 0x8000FFFF, false);
   if (tmp)
     vr_warn(dev, "timed out waiting for PSP to reach valid state, but continuing anyway\n");
 
   /* reset command */
-  vr_info(dev, "do mode1 reset\n");
   WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64, GFX_CTRL_CMD_ID_MODE1_RST);
   msleep(500);
 
   /* wait for ACK */
-  vr_info(dev, "PSP wait\n");
   offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_33);
   tmp = psp_wait_for(adev, offset, 0x80000000, 0x80000000, false);
   if (tmp)
@@ -221,7 +204,6 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
       break;
     udelay(1);
   }
-  vr_info(dev, "memsize: %x\n", tmp);
 
   /*
    * this takes a long time :(
@@ -231,10 +213,6 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
     /* see if PSP bootloader comes back */
     if (RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L)
       break;
-
-    vr_info(dev, "PSP bootloader flags? %x, timeout: %s\n",
-            RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35), !timeout ? "yes" : "no");
-
     msleep(100);
   }
 
@@ -246,9 +224,8 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   else
     vr_info(dev, "PSP mode1 reset successful\n");
 
-  pci_restore_state(dev->pdev);
-
 out:
+  pci_restore_state(dev->pdev);
   amdgpu_atombios_scratch_regs_engine_hung(adev, false);
 
 free_adev:
@@ -259,7 +236,7 @@ free_adev:
 
 const struct vendor_reset_ops amd_navi10_ops =
 {
-  .version = {1, 0},
+  .version = {1, 1},
   .probe = amd_common_probe,
   .pre_reset = amd_common_pre_reset,
   .reset = amd_navi10_reset,
