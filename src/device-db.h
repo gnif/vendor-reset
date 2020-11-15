@@ -111,5 +111,7 @@ static struct vendor_reset_cfg vendor_reset_devices[] = {
     _AMD_NAVI10(&amd_navi10_ops),
     _AMD_NAVI14(&amd_navi10_ops),
     _AMD_NAVI12(&amd_navi10_ops),
-    {0},
+
+    /* end of array guard */
+    {.vendor = 0}
 };
