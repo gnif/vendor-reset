@@ -30,7 +30,7 @@ struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
     if (cfg->vendor != vendor)
       continue;
 
-    if (device == PCI_ANY_ID || device == cfg->device)
+    if (cfg->device == PCI_ANY_ID || cfg->device == device)
       break;
   }
 
