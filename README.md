@@ -45,6 +45,12 @@ Either `modprobe vendor-reset` or add the device to the appropriate place to
 load it at system boot, such as `/etc/modules` (Debian). Consult your
 distribution's documentation as to the best way to perform this.
 
+**NOTE: ** This module must be loaded EARLY, the default reset the kernel will
+try to perform completely breaks the GPU which this module can not recover from.
+Please consult your distributions documentation on how to do this, for most
+however it will be as simple as adding `vendor-reset` to `/etc/modules` and
+updating your initrd.
+
 ## Supported Devices
 
 | Vendor | Family | Common Name(s)
