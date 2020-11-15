@@ -24,10 +24,16 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "vendor-reset-dev.h"
 
 /* these are to remove the dependency on DRM */
+#include <linux/kgdb.h>
 #define DRM_INFO(fmt, args...) pr_info("vendor-reset-drm: " fmt, ##args)
 #define DRM_ERROR(fmt, args...) pr_err("vendor-reset-drm: " fmt, ##args)
 #define DRM_DEBUG(fmt, args...) pr_debug("vendor-reset-drm: " fmt, ##args)
-
+static inline bool drm_can_sleep(void)
+{
+	if (in_atomic() || in_dbg_master() || irqs_disabled())
+		return false;
+	return true;
+}
 
 #define RREG32(reg)                                                          \
   ({                                                                         \
