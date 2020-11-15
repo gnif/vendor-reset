@@ -27,7 +27,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 static long vendor_reset_ioctl_reset(struct file * filp, unsigned long arg)
 {
   struct vendor_reset_ioctl iodev;
-  struct vendor_reset_cfg *cfg;
+  const struct vendor_reset_cfg *cfg;
   struct pci_dev * dev;
   int ret;
 

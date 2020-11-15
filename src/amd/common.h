@@ -123,7 +123,7 @@ static inline struct amd_vendor_private *amd_private(struct vendor_reset_dev *vd
   return vdev->vendor_private;
 }
 
-int amd_common_probe(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
+int amd_common_probe(const struct vendor_reset_cfg *cfg, struct pci_dev *dev);
 int amd_common_pre_reset(struct vendor_reset_dev *);
 int amd_common_post_reset(struct vendor_reset_dev *);
 

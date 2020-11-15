@@ -32,7 +32,7 @@ static int (*orig_pci_dev_specific_reset)(struct pci_dev *dev, int probe);
 static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
 {
   int ret;
-  struct vendor_reset_cfg *cfg;
+  const struct vendor_reset_cfg *cfg;
 
   cfg = vendor_reset_cfg_find(dev->vendor, dev->device);
   if (!cfg)

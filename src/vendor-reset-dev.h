@@ -26,7 +26,7 @@ struct vendor_reset_cfg;
 
 struct vendor_reset_dev
 {
-  struct vendor_reset_cfg *cfg;
+  const struct vendor_reset_cfg *cfg;
   struct pci_dev *pdev;
   unsigned long info;
 
@@ -46,7 +46,7 @@ struct vendor_reset_ops
   /* version of the reset operations for logging */
   const struct vendor_reset_ver version;
   /* called when the kernel is probing for a working reset function */
-  int (*probe)(struct vendor_reset_cfg *, struct pci_dev *);
+  int (*probe)(const struct vendor_reset_cfg *, struct pci_dev *);
   /* any pre-reset ops to do, i.e., common code between devices */
   int (*pre_reset)(struct vendor_reset_dev *);
   /* the reset method for the device at the specified address */
@@ -74,12 +74,13 @@ struct vendor_reset_cfg
 };
 
 /* search the device table for the specified vendor and device id and return it */
-struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
+const struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
   unsigned int device);
 
 /* perform the device reset */
-long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
-long vendor_reset_dev(struct vendor_reset_cfg *cfg, struct pci_dev *dev);
+long vendor_reset_dev_locked(const struct vendor_reset_cfg *cfg,
+    struct pci_dev *dev);
+long vendor_reset_dev(const struct vendor_reset_cfg *cfg, struct pci_dev *dev);
 
 #define vr_info(vdev, fmt, arg...) \
   pci_info ((vdev)->pdev, "%s: " fmt, (vdev)->cfg->info_str, ##arg)

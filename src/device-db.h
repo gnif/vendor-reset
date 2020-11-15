@@ -102,7 +102,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
     {PCI_VENDOR_ID_ATI, 0x7360, op, DEVICE_INFO(AMD_NAVI12)}, \
     {PCI_VENDOR_ID_ATI, 0x7362, op, DEVICE_INFO(AMD_NAVI12)}
 
-static struct vendor_reset_cfg vendor_reset_devices[] = {
+static const struct vendor_reset_cfg vendor_reset_devices[] = {
     _AMD_POLARIS10(&amd_polaris10_ops),
     _AMD_POLARIS11(&amd_polaris10_ops),
     _AMD_POLARIS12(&amd_polaris10_ops),

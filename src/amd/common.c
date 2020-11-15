@@ -28,7 +28,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "common.h"
 #include "compat.h"
 
-int amd_common_probe(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
+int amd_common_probe(const struct vendor_reset_cfg *cfg, struct pci_dev *dev)
 {
   /* disable bus reset for the card, seems to be an issue with all of them */
   dev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;

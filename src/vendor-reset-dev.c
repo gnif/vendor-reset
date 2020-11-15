@@ -20,10 +20,10 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "vendor-reset-dev.h"
 #include "device-db.h"
 
-struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
+const struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
   unsigned int device)
 {
-  struct vendor_reset_cfg * cfg;
+  const struct vendor_reset_cfg * cfg;
 
   for(cfg = vendor_reset_devices; cfg->vendor; ++cfg)
   {
@@ -40,7 +40,8 @@ struct vendor_reset_cfg * vendor_reset_cfg_find(unsigned int vendor,
   return cfg;
 }
 
-long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
+long vendor_reset_dev_locked(const struct vendor_reset_cfg *cfg,
+    struct pci_dev *dev)
 {
   struct vendor_reset_dev vdev =
   {
@@ -78,7 +79,8 @@ long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
   return ret;
 }
 
-long vendor_reset_dev(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
+long vendor_reset_dev(const struct vendor_reset_cfg *cfg,
+    struct pci_dev *dev)
 {
   int ret;
 
