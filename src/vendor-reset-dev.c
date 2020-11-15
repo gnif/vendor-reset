@@ -56,19 +56,25 @@ long vendor_reset_dev_locked(struct vendor_reset_cfg *cfg, struct pci_dev *dev)
 
   if (cfg->ops->pre_reset)
   {
+    vr_info(&vdev, "performing pre-reset\n");
     ret = cfg->ops->pre_reset(&vdev);
     if (ret)
       return ret;
   }
 
   /* expose return code to cleanup */
+  vr_info(&vdev, "performing reset\n");
   ret = vdev.reset_ret = cfg->ops->reset(&vdev);
   if (ret)
     vr_warn(&vdev, "failed to reset device\n");
 
   if (cfg->ops->post_reset)
+  {
+    vr_info(&vdev, "performing post-reset\n");
     ret = cfg->ops->post_reset(&vdev);
+  }
 
+  vr_info(&vdev, "reset result = %d\n", ret);
   return ret;
 }
 
