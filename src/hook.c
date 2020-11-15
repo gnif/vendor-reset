@@ -29,6 +29,8 @@ module_param(install_hook, bool, 0);
 static bool hook_installed = false;
 static int (*orig_pci_dev_specific_reset)(struct pci_dev *dev, int probe);
 
+/* TCO breaks the hook, we must disable it for this function */
+__attribute__((optimize("-fno-optimize-sibling-calls")))
 static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
 {
   int ret;
