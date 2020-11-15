@@ -30,8 +30,9 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "mp/mp_11_0_offset.h"
 #include "mp/mp_11_0_sh_mask.h"
 #include "nbio_2_3_offset.h"
-#include "psp_gfx_if.h"
 #include "nv.h"
+#include "psp_gfx_if.h"
+#include "smu_v11_0_ppsmc.h"
 
 extern bool amdgpu_get_bios(struct amd_fake_dev *adev);
 
