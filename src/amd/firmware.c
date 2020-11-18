@@ -40,11 +40,11 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 u32 amdgpu_io_rreg(struct amd_fake_dev *adev, u32 reg)
 {
   if ((reg * 4) < adev_to_amd_private(adev)->rio_mem_size)
-    return ioread32(adev_to_amd_private(adev)->rio_mem + (reg * 4));
+    return ioread32(adev_to_amd_private(adev)->rio_mem + reg);
   else
   {
-    iowrite32((reg * 4), adev_to_amd_private(adev)->rio_mem + (mmMM_INDEX * 4));
-    return ioread32(adev_to_amd_private(adev)->rio_mem + (mmMM_DATA * 4));
+    iowrite32((reg * 4), adev_to_amd_private(adev)->rio_mem + mmMM_INDEX);
+    return ioread32(adev_to_amd_private(adev)->rio_mem + mmMM_DATA);
   }
 }
 
@@ -60,11 +60,11 @@ u32 amdgpu_io_rreg(struct amd_fake_dev *adev, u32 reg)
 void amdgpu_io_wreg(struct amd_fake_dev *adev, u32 reg, u32 v)
 {
   if ((reg * 4) < adev_to_amd_private(adev)->rio_mem_size)
-    iowrite32(v, adev_to_amd_private(adev)->rio_mem + (reg * 4));
+    iowrite32(v, adev_to_amd_private(adev)->rio_mem + reg);
   else
   {
-    iowrite32((reg * 4), adev_to_amd_private(adev)->rio_mem + (mmMM_INDEX * 4));
-    iowrite32(v, adev_to_amd_private(adev)->rio_mem + (mmMM_DATA * 4));
+    iowrite32((reg * 4), adev_to_amd_private(adev)->rio_mem + mmMM_INDEX);
+    iowrite32(v, adev_to_amd_private(adev)->rio_mem + mmMM_DATA);
   }
 }
 
