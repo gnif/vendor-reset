@@ -38,11 +38,11 @@ static inline bool drm_can_sleep(void)
 #define RREG32(reg)                                                          \
   ({                                                                         \
     u32 __out;                                                               \
-    if ((reg) < adev_to_amd_private(adev)->mmio_size)                        \
+    if (((reg) * 4) < adev_to_amd_private(adev)->mmio_size)                        \
       __out = readl(adev_to_amd_private(adev)->mmio + (reg));                \
     else                                                                     \
     {                                                                        \
-      writel((reg), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
+      writel(((reg) * 4), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
       __out = readl(adev_to_amd_private(adev)->mmio + mmMM_DATA);            \
     }                                                                        \
     __out;                                                                   \
@@ -51,11 +51,11 @@ static inline bool drm_can_sleep(void)
 #define WREG32(reg, v)                                                       \
   do                                                                         \
   {                                                                          \
-    if ((reg) < adev_to_amd_private(adev)->mmio_size)                        \
+    if (((reg) * 4) < adev_to_amd_private(adev)->mmio_size)                        \
       writel(v, adev_to_amd_private(adev)->mmio + (reg));                    \
     else                                                                     \
     {                                                                        \
-      writel((reg), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
+      writel(((reg) * 4), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
       writel(v, adev_to_amd_private(adev)->mmio + mmMM_DATA);                \
     }                                                                        \
   } while (0)
