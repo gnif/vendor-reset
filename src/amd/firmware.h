@@ -25,4 +25,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 int atom_bios_init(struct amd_fake_dev *adev);
 void atom_bios_fini(struct amd_fake_dev *adev);
 
+/* this is actually in amdgpu_bios.c */
+bool amdgpu_get_bios(struct amd_fake_dev *adev);
+
 #endif

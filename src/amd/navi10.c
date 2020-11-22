@@ -33,15 +33,149 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "nv.h"
 #include "psp_gfx_if.h"
 #include "smu_v11_0_ppsmc.h"
+#include "thm/thm_11_0_2_offset.h"
+#include "thm/thm_11_0_2_sh_mask.h"
 
-extern bool amdgpu_get_bios(struct amd_fake_dev *adev);
+enum navi10_reset_type
+{
+  NAVI10_RESET_NONE,
+  NAVI10_RESET_BACO,
+  NAVI10_RESET_MODE1,
+};
+
+static int navi10_needs_reset(struct vendor_reset_dev *dev, enum navi10_reset_type *type)
+{
+  struct amd_vendor_private *priv = amd_private(dev);
+  struct amd_fake_dev *adev = &priv->adev;
+  u32 smu_resp, mp1_intr, psp_bl_ready, sol;
+
+  /* collect some state info */
+  sol = RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_81);
+  smu_resp = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
+  mp1_intr = (RREG32_PCIE(MP1_Public |
+                          (smnMP1_FIRMWARE_FLAGS & 0xffffffff)) &
+              MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
+             MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT;
+  psp_bl_ready = !!(RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L);
+  vr_info(dev, "SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s\n",
+          smu_resp, sol, mp1_intr ? "yes" : "no",
+          psp_bl_ready ? "yes" : "no");
+
+  if (sol == 0x0 && !mp1_intr && psp_bl_ready)
+    /* okay, if we're in this state, we're probably reset */
+    *type = NAVI10_RESET_NONE;
+  else if (sol && sol != ~1L && mp1_intr && psp_bl_ready)
+    *type = NAVI10_RESET_BACO;
+  else
+    *type = NAVI10_RESET_MODE1;
+
+  return *type != NAVI10_RESET_NONE;
+}
+
+static int navi10_mode1_reset(struct vendor_reset_dev *dev)
+{
+  struct amd_vendor_private *priv = amd_private(dev);
+  struct amd_fake_dev *adev = &priv->adev;
+  u32 offset, tmp;
+  int ret = 0, timeout;
+
+  vr_info(dev, "begin psp mode 1 reset\n");
+  amdgpu_atombios_scratch_regs_engine_hung(adev, true);
+
+  pci_save_state(dev->pdev);
+
+  /* check validity of PSP before reset */
+  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64);
+  tmp = psp_wait_for(adev, offset, 0x80000000, 0x8000FFFF, false);
+  if (tmp)
+    vr_warn(dev, "timed out waiting for PSP to reach valid state, but continuing anyway\n");
+
+  /* reset command */
+  WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64, GFX_CTRL_CMD_ID_MODE1_RST);
+  msleep(500);
+
+  /* wait for ACK */
+  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_33);
+  tmp = psp_wait_for(adev, offset, 0x80000000, 0x80000000, false);
+  if (tmp)
+  {
+    vr_warn(dev, "PSP did not acknowledger reset\n");
+    ret = -EINVAL;
+    goto out;
+  }
+
+  vr_info(dev, "mode1 reset succeeded\n");
+
+  pci_restore_state(dev->pdev);
+
+  for (timeout = 100000; timeout; --timeout)
+  {
+    tmp = RREG32_SOC15(NBIO, 0, mmRCC_DEV0_EPF0_RCC_CONFIG_MEMSIZE);
+
+    if (tmp != 0xffffffff)
+      break;
+    udelay(1);
+  }
+
+out:
+  return ret;
+}
+
+static int navi10_wait_for_psp_ready(struct vendor_reset_dev *dev)
+{
+  struct amd_vendor_private *priv = amd_private(dev);
+  struct amd_fake_dev *adev = &priv->adev;
+  int timeout;
+
+  /*
+   * this takes a long time :(
+   */
+  for (timeout = 100; timeout; --timeout)
+  {
+    /* see if PSP bootloader comes back */
+    if (RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L)
+      return 0;
+    msleep(100);
+  }
+
+  return (RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L) ? 0 : -ETIMEDOUT;
+}
+
+static int navi10_baco_reset(struct vendor_reset_dev *dev)
+{
+  struct amd_vendor_private *priv = amd_private(dev);
+  struct amd_fake_dev *adev = &priv->adev;
+  int ret, tmp;
+
+  vr_info(dev, "Entering BACO\n");
+
+  /* BACO_SEQ_BACO */
+  ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_ArmD3, 0, NULL);
+  if (ret)
+    return ret;
+
+  tmp = RREG32_SOC15(THM, 0, mmTHM_BACO_CNTL);
+  tmp |= 0x80000000;
+  WREG32_SOC15(THM, 0, mmTHM_BACO_CNTL, tmp);
+
+  ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_EnterBaco, 0, NULL);
+  if (ret)
+    return ret;
+  msleep(500);
+
+  vr_info(dev, "Exiting BACO\n");
+  ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_ExitBaco, 0, NULL);
+
+  return ret;
+}
 
 static int amd_navi10_reset(struct vendor_reset_dev *dev)
 {
   struct amd_vendor_private *priv = amd_private(dev);
   struct amd_fake_dev *adev;
   int ret = 0, timeout;
-  u32 sol, smu_resp, mp1_intr, psp_bl_ready, tmp, offset;
+  u32 sol;
+  enum navi10_reset_type reset_type;
 
   adev = &priv->adev;
   ret = amd_fake_dev_init(adev, dev);
@@ -93,141 +227,37 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   }
 
   if (sol == ~1L)
-  {
-    vr_warn(dev, "Timed out waiting for SOL to be valid\n");
     /* continuing anyway because sometimes it can still be reset from here */
-  }
+    vr_warn(dev, "Timed out waiting for SOL to be valid\n");
 
-  vr_info(dev, "bus reset disabled? %s\n", (dev->pdev->dev_flags & PCI_DEV_FLAGS_NO_BUS_RESET) ? "yes" : "no");
-
-  /* collect some info for logging for now */
-  smu_resp = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
-  mp1_intr = (RREG32_PCIE(MP1_Public |
-                          (smnMP1_FIRMWARE_FLAGS & 0xffffffff)) &
-              MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
-             MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT;
-  psp_bl_ready = !!(RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L);
-  vr_info(dev, "SMU response reg: %x, sol reg: %x, mp1 intr enabled? %s, bl ready? %s\n",
-          smu_resp, sol, mp1_intr ? "yes" : "no",
-          psp_bl_ready ? "yes" : "no");
-
-  /* okay, if we're in this state, we're probably reset */
-  if (sol == 0x0 && !mp1_intr && psp_bl_ready)
+  if (!navi10_needs_reset(dev, &reset_type))
     goto free_adev;
 
-  /* this tells the drivers nvram is lost and everything needs to be reset */
-  vr_info(dev, "Clearing scratch regs 6 and 7\n");
-  WREG32(adev->bios_scratch_reg_offset + 6, 0);
-  WREG32(adev->bios_scratch_reg_offset + 7, 0);
-
-  /* it only makes sense to reset mp1 if it's running
-   * XXX: is this even necessary? in early testing, I ran into
-   * situations where MP1 was alive but not responsive, but in
-   * later testing I have not been able to replicate this scenario.
-   */
-  if (smu_resp != 0x01 && mp1_intr)
-  {
-    vr_info(dev, "MP1 reset\n");
-    WREG32_PCIE(MP1_Public | (smnMP1_PUB_CTRL & 0xffffffff),
-                1 & MP1_SMN_PUB_CTRL__RESET_MASK);
-    WREG32_PCIE(MP1_Public | (smnMP1_PUB_CTRL & 0xffffffff),
-                1 & ~MP1_SMN_PUB_CTRL__RESET_MASK);
-
-    vr_info(dev, "wait for MP1\n");
-    for (timeout = 100000; timeout; --timeout)
-    {
-      tmp = RREG32_PCIE(MP1_Public |
-                        (smnMP1_FIRMWARE_FLAGS & 0xffffffff));
-      if ((tmp &
-           MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
-          MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT)
-        break;
-      udelay(1);
-    }
-
-    if (!timeout &&
-        !((tmp & MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK) >>
-          MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED__SHIFT))
-    {
-      vr_warn(dev, "timed out waiting for MP1 reset\n");
-    }
-
-    smu_wait(adev);
-    smu_resp = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
-    vr_info(dev, "SMU resp reg: %x\n", tmp);
-  }
-
-  /*
-   * again, this only makes sense if we have an SMU to talk to
-   * some of these may fail, that's okay. we're just turning off as many
-   * things as possible
-   */
-  if (mp1_intr)
-  {
-    smum_send_msg_to_smc(adev, PPSMC_MSG_DisallowGfxOff, NULL);
-    smum_send_msg_to_smc(adev, PPSMC_MSG_PrepareMp1ForReset, NULL);
-  }
-
-  vr_info(dev, "begin psp mode 1 reset\n");
-  amdgpu_atombios_scratch_regs_engine_hung(adev, true);
-
-  pci_save_state(dev->pdev);
-
-  /* check validity of PSP before reset */
-  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64);
-  tmp = psp_wait_for(adev, offset, 0x80000000, 0x8000FFFF, false);
-  if (tmp)
-    vr_warn(dev, "timed out waiting for PSP to reach valid state, but continuing anyway\n");
-
-  /* reset command */
-  WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64, GFX_CTRL_CMD_ID_MODE1_RST);
-  msleep(500);
-
-  /* wait for ACK */
-  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_33);
-  tmp = psp_wait_for(adev, offset, 0x80000000, 0x80000000, false);
-  if (tmp)
-  {
-    vr_warn(dev, "PSP did not acknowledger reset\n");
-    ret = -EINVAL;
-    goto out;
-  }
-
-  vr_info(dev, "mode1 reset succeeded\n");
-
-  pci_restore_state(dev->pdev);
-
-  for (timeout = 100000; timeout; --timeout)
-  {
-    tmp = RREG32_SOC15(NBIO, 0, mmRCC_DEV0_EPF0_RCC_CONFIG_MEMSIZE);
-
-    if (tmp != 0xffffffff)
-      break;
-    udelay(1);
-  }
-
-  /*
-   * this takes a long time :(
-   */
-  for (timeout = 100; timeout; --timeout)
-  {
-    /* see if PSP bootloader comes back */
-    if (RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L)
-      break;
-    msleep(100);
-  }
-
-  if (!timeout && !(RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35) & 0x80000000L))
-  {
-    vr_warn(dev, "timed out waiting for PSP bootloader to respond after reset\n");
-    ret = -ETIME;
-  }
+  if (reset_type == NAVI10_RESET_MODE1)
+    ret = navi10_baco_reset(dev);
   else
-    vr_info(dev, "PSP mode1 reset successful\n");
+  {
+    ret = navi10_mode1_reset(dev);
+    if (ret)
+      goto mode1_out;
 
-out:
-  pci_restore_state(dev->pdev);
-  amdgpu_atombios_scratch_regs_engine_hung(adev, false);
+    if ((ret = navi10_wait_for_psp_ready(dev)))
+      vr_warn(dev, "timed out waiting for PSP bootloader to respond after reset\n");
+    else
+      vr_info(dev, "PSP mode1 reset successful\n");
+
+  mode1_out:
+    pci_restore_state(dev->pdev);
+    amdgpu_atombios_scratch_regs_engine_hung(adev, false);
+  }
+
+  if (!ret)
+  {
+    /* this tells the drivers nvram is lost and everything needs to be reset */
+    vr_info(dev, "Clearing scratch regs 6 and 7\n");
+    WREG32(adev->bios_scratch_reg_offset + 6, 0);
+    WREG32(adev->bios_scratch_reg_offset + 7, 0);
+  }
 
 free_adev:
   amd_fake_dev_fini(adev);
@@ -235,11 +265,10 @@ free_adev:
   return ret;
 }
 
-const struct vendor_reset_ops amd_navi10_ops =
-{
-  .version = {1, 1},
-  .probe = amd_common_probe,
-  .pre_reset = amd_common_pre_reset,
-  .reset = amd_navi10_reset,
-  .post_reset = amd_common_post_reset,
+const struct vendor_reset_ops amd_navi10_ops = {
+    .version = {2, 0},
+    .probe = amd_common_probe,
+    .pre_reset = amd_common_pre_reset,
+    .reset = amd_navi10_reset,
+    .post_reset = amd_common_post_reset,
 };
