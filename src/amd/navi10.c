@@ -61,10 +61,10 @@ static int navi10_needs_reset(struct vendor_reset_dev *dev, enum navi10_reset_ty
           smu_resp, sol, mp1_intr ? "yes" : "no",
           psp_bl_ready ? "yes" : "no");
 
-  if (sol == 0x0 && !mp1_intr && psp_bl_ready)
+  if (!sol && !mp1_intr && psp_bl_ready)
     /* okay, if we're in this state, we're probably reset */
     *type = NAVI10_RESET_NONE;
-  else if (sol && sol != ~1L && mp1_intr && psp_bl_ready)
+  else if (sol && sol != ~1L && smu_resp != 0 && mp1_intr && psp_bl_ready)
     *type = NAVI10_RESET_BACO;
   else
     *type = NAVI10_RESET_MODE1;
@@ -233,7 +233,7 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
   if (!navi10_needs_reset(dev, &reset_type))
     goto free_adev;
 
-  if (reset_type == NAVI10_RESET_MODE1)
+  if (reset_type == NAVI10_RESET_BACO)
     ret = navi10_baco_reset(dev);
   else
   {
