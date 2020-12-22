@@ -21,6 +21,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "vendor-reset-ioctl.h"
 
 #include <linux/miscdevice.h>
+#include <linux/uaccess.h>
 
 #define VENDOR_RESET_IOCTL_DEVNAME "vendor_reset"
 
