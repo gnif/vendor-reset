@@ -58,7 +58,7 @@ updating your initrd.
 |AMD|Polaris 10| RX 470, 480, 570, 580, 590
 |AMD|Polaris 11| RX 460, 560
 |AMD|Polaris 12| RX 540, 550
-|AMD|Vega 10| Vega 56/64 |
+|AMD|Vega 10| Vega 56/64/FE |
 |AMD|Vega 20| Radeon VII |
 |AMD|Navi 10| 5600XT, 5700, 5700XT
 |AMD|Navi 12| Pro 5600M |
