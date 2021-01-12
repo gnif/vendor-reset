@@ -30,52 +30,52 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #define DRM_DEBUG(fmt, args...) pr_debug("vendor-reset-drm: " fmt, ##args)
 static inline bool drm_can_sleep(void)
 {
-	if (in_atomic() || in_dbg_master() || irqs_disabled())
-		return false;
-	return true;
+  if (in_atomic() || in_dbg_master() || irqs_disabled())
+    return false;
+  return true;
 }
 
-#define RREG32(reg)                                                          \
-  ({                                                                         \
-    u32 __out;                                                               \
-    if (((reg) * 4) < adev_to_amd_private(adev)->mmio_size)                        \
-      __out = readl(adev_to_amd_private(adev)->mmio + (reg));                \
-    else                                                                     \
-    {                                                                        \
-      writel(((reg) * 4), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
-      __out = readl(adev_to_amd_private(adev)->mmio + mmMM_DATA);            \
-    }                                                                        \
-    __out;                                                                   \
+#define RREG32(reg)                                                    \
+  ({                                                                   \
+    u32 __out;                                                         \
+    if (((reg)*4) < adev_to_amd_private(adev)->mmio_size)              \
+      __out = readl(adev_to_amd_private(adev)->mmio + (reg));          \
+    else                                                               \
+    {                                                                  \
+      writel(((reg)*4), adev_to_amd_private(adev)->mmio + mmMM_INDEX); \
+      __out = readl(adev_to_amd_private(adev)->mmio + mmMM_DATA);      \
+    }                                                                  \
+    __out;                                                             \
   })
 
-#define WREG32(reg, v)                                                       \
-  do                                                                         \
-  {                                                                          \
-    if (((reg) * 4) < adev_to_amd_private(adev)->mmio_size)                        \
-      writel(v, adev_to_amd_private(adev)->mmio + (reg));                    \
-    else                                                                     \
-    {                                                                        \
-      writel(((reg) * 4), adev_to_amd_private(adev)->mmio + mmMM_INDEX);           \
-      writel(v, adev_to_amd_private(adev)->mmio + mmMM_DATA);                \
-    }                                                                        \
+#define WREG32(reg, v)                                                 \
+  do                                                                   \
+  {                                                                    \
+    if (((reg)*4) < adev_to_amd_private(adev)->mmio_size)              \
+      writel(v, adev_to_amd_private(adev)->mmio + (reg));              \
+    else                                                               \
+    {                                                                  \
+      writel(((reg)*4), adev_to_amd_private(adev)->mmio + mmMM_INDEX); \
+      writel(v, adev_to_amd_private(adev)->mmio + mmMM_DATA);          \
+    }                                                                  \
   } while (0)
 
-#define WREG32_PCIE(reg, v)                                                 \
-  do                                                                        \
-  {                                                                         \
-    WREG32(mmPCIE_INDEX2, reg);                                             \
-    (void)RREG32(mmPCIE_INDEX2);                                            \
-    WREG32(mmPCIE_DATA2, v);                                                \
-    (void)RREG32(mmPCIE_DATA2);                                             \
+#define WREG32_PCIE(reg, v)      \
+  do                             \
+  {                              \
+    WREG32(mmPCIE_INDEX2, reg);  \
+    (void)RREG32(mmPCIE_INDEX2); \
+    WREG32(mmPCIE_DATA2, v);     \
+    (void)RREG32(mmPCIE_DATA2);  \
   } while (0)
 
-#define RREG32_PCIE(reg)                                                    \
-  ({                                                                        \
-    u32 __tmp_read;                                                         \
-    WREG32(mmPCIE_INDEX2, reg);                                             \
-    (void)RREG32(mmPCIE_INDEX2);                                            \
-    __tmp_read = RREG32(mmPCIE_DATA2);                                      \
-    __tmp_read;                                                             \
+#define RREG32_PCIE(reg)               \
+  ({                                   \
+    u32 __tmp_read;                    \
+    WREG32(mmPCIE_INDEX2, reg);        \
+    (void)RREG32(mmPCIE_INDEX2);       \
+    __tmp_read = RREG32(mmPCIE_DATA2); \
+    __tmp_read;                        \
   })
 
 /* KIQ is only used for SRIOV accesses, we are not targetting these devices so
@@ -116,6 +116,8 @@ static inline bool drm_can_sleep(void)
 struct amd_vendor_private
 {
   u16 cfg;
+
+  struct pci_dev *audio_pdev;
 
   struct vendor_reset_dev *vdev;
   struct pci_saved_state *saved_state;
