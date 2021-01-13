@@ -84,15 +84,6 @@ int amd_common_pre_reset(struct vendor_reset_dev *dev)
   pci_read_config_word(pdev, PCI_COMMAND, &priv->cfg);
   pci_write_config_word(pdev, PCI_COMMAND, priv->cfg | PCI_COMMAND_MEMORY | PCI_COMMAND_INTX_DISABLE);
 
-  priv->audio_pdev = pci_get_domain_bus_and_slot(pci_domain_nr(pdev->bus),
-                                                 pdev->bus->number, 1);
-  if (priv->audio_pdev)
-  {
-    pci_set_power_state(priv->audio_pdev, PCI_D0);
-    pci_clear_master(priv->audio_pdev);
-    pci_save_state(priv->audio_pdev);
-  }
-
   return 0;
 
 err_free:
@@ -105,8 +96,7 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
   struct amd_vendor_private *priv = amd_private(dev);
   struct pci_dev *pdev = dev->pdev;
 
-  if (priv->mmio)
-  {
+  if (priv->mmio) {
     iounmap(priv->mmio);
     priv->mmio = NULL;
   }
@@ -123,14 +113,6 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
     pci_restore_state(pdev);
   }
   pci_write_config_word(pdev, PCI_COMMAND, priv->cfg);
-
-  if (priv->audio_pdev)
-  {
-    pci_restore_state(priv->audio_pdev);
-    pci_set_power_state(priv->audio_pdev, PCI_D3hot);
-    pci_dev_put(priv->audio_pdev);
-    priv->audio_pdev = NULL;
-  }
 
   /* don't try to go to low power if reset failed */
   if (!dev->reset_ret)
