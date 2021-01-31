@@ -22,6 +22,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/ftrace.h>
 #include <linux/kprobes.h>
 #include <linux/pci.h>
+#include <linux/version.h>
 
 #include "ftrace.h"
 
@@ -48,8 +49,15 @@ static int resolve_hook_address(struct ftrace_hook *hook)
   return 0;
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 11, 0))
 static void notrace fh_trace_thunk(unsigned long ip, unsigned long parent_ip, struct ftrace_ops *ops, struct pt_regs *regs)
 {
+#else
+static void notrace fh_trace_thunk(unsigned long ip, unsigned long parent_ip, struct ftrace_ops *ops, struct ftrace_regs *fregs)
+{
+  struct pt_regs *regs;
+  regs = ftrace_get_regs(fregs);
+#endif
   struct ftrace_hook *hook = to_ftrace_hook(ops);
 
   if (!within_module(parent_ip, THIS_MODULE))
