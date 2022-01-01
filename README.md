@@ -39,6 +39,9 @@ pattern, or through `dkms` (recommended).
 
     dkms install .
 
+### Arch Linux
+Install the [vendor-reset-dkms-git](https://aur.archlinux.org/packages/vendor-reset-dkms-git) from AUR.
+
 ## Usage
 
 Either `modprobe vendor-reset` or add the device to the appropriate place to
