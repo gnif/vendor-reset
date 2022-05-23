@@ -55,8 +55,7 @@ static void notrace fh_trace_thunk(unsigned long ip, unsigned long parent_ip, st
 #else
 static void notrace fh_trace_thunk(unsigned long ip, unsigned long parent_ip, struct ftrace_ops *ops, struct ftrace_regs *fregs)
 {
-  struct pt_regs *regs;
-  regs = ftrace_get_regs(fregs);
+  struct pt_regs *regs = ftrace_get_regs(fregs);
 #endif
   struct ftrace_hook *hook = to_ftrace_hook(ops);
 
