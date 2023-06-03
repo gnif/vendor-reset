@@ -63,6 +63,9 @@ static int amd_navi10_reset(struct vendor_reset_dev *dev)
     case AMD_NAVI14:
       navi14_reg_base_init(adev);
       break;
+    case AMD_NAVI23:
+      navi23_reg_base_init(adev);
+      break;
     default:
       vr_err(dev, "Unknown Navi type device: [%04x:%04x]\n", dev->pdev->vendor, dev->pdev->device);
       return -ENOTSUPP;
@@ -236,6 +239,15 @@ free_adev:
 }
 
 const struct vendor_reset_ops amd_navi10_ops =
+{
+  .version = {1, 1},
+  .probe = amd_common_probe,
+  .pre_reset = amd_common_pre_reset,
+  .reset = amd_navi10_reset,
+  .post_reset = amd_common_post_reset,
+};
+
+const struct vendor_reset_ops amd_navi23_ops =
 {
   .version = {1, 1},
   .probe = amd_common_probe,
