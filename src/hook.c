@@ -30,7 +30,11 @@ static bool hook_installed = false;
 static int (*orig_pci_dev_specific_reset)(struct pci_dev *dev, int probe);
 
 /* TCO breaks the hook, we must disable it for this function */
+#if defined(__GNUC__) && !defined(__llvm__)
 __attribute__((optimize("-fno-optimize-sibling-calls")))
+#elif defined(__clang__)
+__attribute__((disable_tail_calls))
+#endif
 static int hooked_pci_dev_specific_reset(struct pci_dev *dev, int probe)
 {
   int ret;
