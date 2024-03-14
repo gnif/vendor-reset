@@ -28,6 +28,7 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/version.h>
 #include <asm/unaligned.h>
 
 //#include <drm/drm_util.h>
@@ -38,6 +39,10 @@
 #include "atom.h"
 #include "atom-names.h"
 #include "atom-bits.h"
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
+#define strscpy strlcpy
+#endif
 
 #define ATOM_COND_ABOVE 0
 #define ATOM_COND_ABOVEOREQUAL 1
@@ -1424,7 +1429,7 @@ struct atom_context *amdgpu_atom_parse(struct card_info *card, void *bios)
 	if (*str != '\0')
 	{
 		pr_info("ATOM BIOS: %s\n", str);
-		strlcpy(ctx->vbios_version, str, sizeof(ctx->vbios_version));
+		strscpy(ctx->vbios_version, str, sizeof(ctx->vbios_version));
 	}
 
 	return ctx;
