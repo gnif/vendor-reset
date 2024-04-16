@@ -60,6 +60,7 @@ updating your initrd.
 |AMD|Polaris 12| RX 540, 550
 |AMD|Vega 10| Vega 56/64/FE |
 |AMD|Vega 20| Radeon VII |
+|AMD|Vega 20| Instinct MI100 |
 |AMD|Navi 10| 5600XT, 5700, 5700XT
 |AMD|Navi 12| Pro 5600M |
 |AMD|Navi 14| Pro 5300, RX 5300, 5500XT

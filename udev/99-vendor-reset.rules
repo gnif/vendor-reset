@@ -131,3 +131,5 @@ ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1002", ATTR{device}=="0x734F",
 ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1002", ATTR{device}=="0x7360", RUN+="/bin/sh -c '/sbin/modprobe vendor-reset; echo device_specific > /sys$env{DEVPATH}/reset_method'"
 
 ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1002", ATTR{device}=="0x7362", RUN+="/bin/sh -c '/sbin/modprobe vendor-reset; echo device_specific > /sys$env{DEVPATH}/reset_method'"
+
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1002", ATTR{device}=="0x738c", RUN+="/bin/sh -c '/sbin/modprobe vendor-reset; echo device_specific > /sys$env{DEVPATH}/reset_method'"
