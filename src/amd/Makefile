@@ -6,6 +6,7 @@ vendor-reset-y += \
 	src/amd/polaris10.o \
 	src/amd/vega10.o \
 	src/amd/vega20.o \
+	src/amd/barcelo.o \
 	src/amd/amdgpu/amdgpu_device.o \
 	src/amd/amdgpu/amdgpu_discovery.o \
 	src/amd/amdgpu/amdgpu_bios.o \
