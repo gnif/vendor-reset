@@ -105,6 +105,13 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #define _AMD_ARCTURUS(op) \
     {PCI_VENDOR_ID_ATI, 0x738c, op, DEVICE_INFO(AMD_VEGA20)} //Instinct MI100
 
+#define _AMD_NAVI23(op) \
+    {PCI_VENDOR_ID_ATI, 0x73ff, op, DEVICE_INFO(AMD_NAVI23)}
+
+/* 03:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Navi 23 [Radeon RX 6600/6600 XT/6600M] (rev c1)
+  vendor="0x1002", device="0x73ff"
+*/
+
 static const struct vendor_reset_cfg vendor_reset_devices[] = {
     _AMD_POLARIS10(&amd_polaris10_ops),
     _AMD_POLARIS11(&amd_polaris10_ops),
@@ -115,6 +122,7 @@ static const struct vendor_reset_cfg vendor_reset_devices[] = {
     _AMD_NAVI14(&amd_navi10_ops),
     _AMD_NAVI12(&amd_navi10_ops),
     _AMD_ARCTURUS(&amd_vega20_ops),
+    _AMD_NAVI23(&amd_navi23_ops),
 
     /* end of array guard */
     {.vendor = 0}
