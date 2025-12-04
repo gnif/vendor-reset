@@ -4115,6 +4115,7 @@
 #define mmSCL0_SCL_COEF_RAM_CONFLICT_STATUS 0x1B55
 #define mmSCL0_SCL_COEF_RAM_SELECT 0x1B40
 #define mmSCL0_SCL_COEF_RAM_TAP_DATA 0x1B41
+#define mmSCL0_SCL_SCALER_ENABLE 0x1B42
 #define mmSCL0_SCL_CONTROL 0x1B44
 #define mmSCL0_SCL_DEBUG 0x1B6A
 #define mmSCL0_SCL_DEBUG2 0x1B69
@@ -4144,6 +4145,7 @@
 #define mmSCL1_SCL_COEF_RAM_CONFLICT_STATUS 0x1E55
 #define mmSCL1_SCL_COEF_RAM_SELECT 0x1E40
 #define mmSCL1_SCL_COEF_RAM_TAP_DATA 0x1E41
+#define mmSCL1_SCL_SCALER_ENABLE 0x1E42
 #define mmSCL1_SCL_CONTROL 0x1E44
 #define mmSCL1_SCL_DEBUG 0x1E6A
 #define mmSCL1_SCL_DEBUG2 0x1E69
@@ -4173,6 +4175,7 @@
 #define mmSCL2_SCL_COEF_RAM_CONFLICT_STATUS 0x4155
 #define mmSCL2_SCL_COEF_RAM_SELECT 0x4140
 #define mmSCL2_SCL_COEF_RAM_TAP_DATA 0x4141
+#define mmSCL2_SCL_SCALER_ENABLE 0x4142
 #define mmSCL2_SCL_CONTROL 0x4144
 #define mmSCL2_SCL_DEBUG 0x416A
 #define mmSCL2_SCL_DEBUG2 0x4169
@@ -4202,6 +4205,7 @@
 #define mmSCL3_SCL_COEF_RAM_CONFLICT_STATUS 0x4455
 #define mmSCL3_SCL_COEF_RAM_SELECT 0x4440
 #define mmSCL3_SCL_COEF_RAM_TAP_DATA 0x4441
+#define mmSCL3_SCL_SCALER_ENABLE 0x4442
 #define mmSCL3_SCL_CONTROL 0x4444
 #define mmSCL3_SCL_DEBUG 0x446A
 #define mmSCL3_SCL_DEBUG2 0x4469
@@ -4231,6 +4235,7 @@
 #define mmSCL4_SCL_COEF_RAM_CONFLICT_STATUS 0x4755
 #define mmSCL4_SCL_COEF_RAM_SELECT 0x4740
 #define mmSCL4_SCL_COEF_RAM_TAP_DATA 0x4741
+#define mmSCL4_SCL_SCALER_ENABLE 0x4742
 #define mmSCL4_SCL_CONTROL 0x4744
 #define mmSCL4_SCL_DEBUG 0x476A
 #define mmSCL4_SCL_DEBUG2 0x4769
@@ -4260,6 +4265,7 @@
 #define mmSCL5_SCL_COEF_RAM_CONFLICT_STATUS 0x4A55
 #define mmSCL5_SCL_COEF_RAM_SELECT 0x4A40
 #define mmSCL5_SCL_COEF_RAM_TAP_DATA 0x4A41
+#define mmSCL5_SCL_SCALER_ENABLE 0x4A42
 #define mmSCL5_SCL_CONTROL 0x4A44
 #define mmSCL5_SCL_DEBUG 0x4A6A
 #define mmSCL5_SCL_DEBUG2 0x4A69
@@ -4287,6 +4293,7 @@
 #define mmSCL_COEF_RAM_CONFLICT_STATUS 0x1B55
 #define mmSCL_COEF_RAM_SELECT 0x1B40
 #define mmSCL_COEF_RAM_TAP_DATA 0x1B41
+#define mmSCL_SCALER_ENABLE 0x1B42
 #define mmSCL_CONTROL 0x1B44
 #define mmSCL_DEBUG 0x1B6A
 #define mmSCL_DEBUG2 0x1B69
@@ -4444,14 +4451,90 @@
 
 /* Registers that spilled out of sid.h */
 #define mmDATA_FORMAT                              0x1AC0
+#define mmLB0_DATA_FORMAT                               0x1AC0
+#define mmLB1_DATA_FORMAT                               0x1DC0
+#define mmLB2_DATA_FORMAT                               0x40C0
+#define mmLB3_DATA_FORMAT                               0x43C0
+#define mmLB4_DATA_FORMAT                               0x46C0
+#define mmLB5_DATA_FORMAT                               0x49C0
 #define mmDESKTOP_HEIGHT                           0x1AC1
+#define mmLB0_DESKTOP_HEIGHT                            0x1AC1
+#define mmLB1_DESKTOP_HEIGHT                            0x1DC1
+#define mmLB2_DESKTOP_HEIGHT                            0x40C1
+#define mmLB3_DESKTOP_HEIGHT                            0x43C1
+#define mmLB4_DESKTOP_HEIGHT                            0x46C1
+#define mmLB5_DESKTOP_HEIGHT                            0x49C1
 #define mmDC_LB_MEMORY_SPLIT                       0x1AC3
+#define mmLB0_DC_LB_MEMORY_SPLIT                        0x1AC3
+#define mmLB1_DC_LB_MEMORY_SPLIT                        0x1DC3
+#define mmLB2_DC_LB_MEMORY_SPLIT                        0x40C3
+#define mmLB3_DC_LB_MEMORY_SPLIT                        0x43C3
+#define mmLB4_DC_LB_MEMORY_SPLIT                        0x46C3
+#define mmLB5_DC_LB_MEMORY_SPLIT                        0x49C3
+#define mmDC_LB_MEM_SIZE                                0x1AC4
+#define mmLB0_DC_LB_MEM_SIZE                            0x1AC4
+#define mmLB1_DC_LB_MEM_SIZE                            0x1DC4
+#define mmLB2_DC_LB_MEM_SIZE                            0x40C4
+#define mmLB3_DC_LB_MEM_SIZE                            0x43C4
+#define mmLB4_DC_LB_MEM_SIZE                            0x46C4
+#define mmLB5_DC_LB_MEM_SIZE                            0x49C4
 #define mmPRIORITY_A_CNT                           0x1AC6
+#define mmLB0_PRIORITY_A_CNT                            0x1AC6
+#define mmLB1_PRIORITY_A_CNT                            0x1DC6
+#define mmLB2_PRIORITY_A_CNT                            0x40C6
+#define mmLB3_PRIORITY_A_CNT                            0x43C6
+#define mmLB4_PRIORITY_A_CNT                            0x46C6
+#define mmLB5_PRIORITY_A_CNT                            0x49C6
 #define mmPRIORITY_B_CNT                           0x1AC7
+#define mmLB0_PRIORITY_B_CNT                            0x1AC7
+#define mmLB1_PRIORITY_B_CNT                            0x1DC7
+#define mmLB2_PRIORITY_B_CNT                            0x40C7
+#define mmLB3_PRIORITY_B_CNT                            0x43C7
+#define mmLB4_PRIORITY_B_CNT                            0x46C7
+#define mmLB5_PRIORITY_B_CNT                            0x49C7
 #define mmDPG_PIPE_ARBITRATION_CONTROL3            0x1B32
+#define mmDMIF_PG0_DPG_PIPE_ARBITRATION_CONTROL3        0x1B32
+#define mmDMIF_PG1_DPG_PIPE_ARBITRATION_CONTROL3        0x1E32
+#define mmDMIF_PG2_DPG_PIPE_ARBITRATION_CONTROL3        0x4132
+#define mmDMIF_PG3_DPG_PIPE_ARBITRATION_CONTROL3        0x4432
+#define mmDMIF_PG4_DPG_PIPE_ARBITRATION_CONTROL3        0x4732
+#define mmDMIF_PG5_DPG_PIPE_ARBITRATION_CONTROL3        0x4A32
 #define mmINT_MASK                                 0x1AD0
+#define mmLB0_INT_MASK                                  0x1AD0
+#define mmLB1_INT_MASK                                  0x1DD0
+#define mmLB2_INT_MASK                                  0x40D0
+#define mmLB3_INT_MASK                                  0x43D0
+#define mmLB4_INT_MASK                                  0x46D0
+#define mmLB5_INT_MASK                                  0x49D0
 #define mmVLINE_STATUS                             0x1AEE
+#define mmLB0_VLINE_STATUS                              0x1AEE
+#define mmLB1_VLINE_STATUS                              0x1DEE
+#define mmLB2_VLINE_STATUS                              0x40EE
+#define mmLB3_VLINE_STATUS                              0x43EE
+#define mmLB4_VLINE_STATUS                              0x46EE
+#define mmLB5_VLINE_STATUS                              0x49EE
 #define mmVBLANK_STATUS                            0x1AEF
+#define mmLB0_VBLANK_STATUS                             0x1AEF
+#define mmLB1_VBLANK_STATUS                             0x1DEF
+#define mmLB2_VBLANK_STATUS                             0x40EF
+#define mmLB3_VBLANK_STATUS                             0x43EF
+#define mmLB4_VBLANK_STATUS                             0x46EF
+#define mmLB5_VBLANK_STATUS                             0x49EF
 
+#define mmSCL_HORZ_FILTER_INIT_RGB_LUMA            0x1B4C
+#define mmSCL0_SCL_HORZ_FILTER_INIT_RGB_LUMA            0x1B4C
+#define mmSCL1_SCL_HORZ_FILTER_INIT_RGB_LUMA            0x1E4C
+#define mmSCL2_SCL_HORZ_FILTER_INIT_RGB_LUMA            0x414C
+#define mmSCL3_SCL_HORZ_FILTER_INIT_RGB_LUMA            0x444C
+#define mmSCL4_SCL_HORZ_FILTER_INIT_RGB_LUMA            0x474C
+#define mmSCL5_SCL_HORZ_FILTER_INIT_RGB_LUMA            0x4A4C
+
+#define mmSCL_HORZ_FILTER_INIT_CHROMA              0x1B4D
+#define mmSCL0_SCL_HORZ_FILTER_INIT_CHROMA              0x1B4D
+#define mmSCL1_SCL_HORZ_FILTER_INIT_CHROMA              0x1E4D
+#define mmSCL2_SCL_HORZ_FILTER_INIT_CHROMA              0x414D
+#define mmSCL3_SCL_HORZ_FILTER_INIT_CHROMA              0x444D
+#define mmSCL4_SCL_HORZ_FILTER_INIT_CHROMA              0x474D
+#define mmSCL5_SCL_HORZ_FILTER_INIT_CHROMA              0x4A4D
 
 #endif
