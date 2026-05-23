@@ -30,6 +30,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "common.h"
 #include "compat.h"
 #include "common_baco.h"
+#include "psp_gfx_if.h"
 
 /* MP Apertures, from smu9_smumgr.c */
 #define MP0_Public 0x03800000
@@ -126,6 +127,41 @@ int vega10_baco_set_state(struct amd_fake_dev *adev, enum BACO_STATE state)
   return -EINVAL;
 }
 
+static int amd_vega10_mode1_reset(struct amd_fake_dev *adev)
+{
+  int ret, i;
+  uint32_t offset;
+  uint32_t pci_regs[128];
+  struct pci_dev *pdev = adev_to_amd_private(adev)->vdev->pdev;
+
+  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64);
+  ret = psp_wait_for(adev, offset, 0x80000000, 0x8000FFFF, false);
+  if (ret) {
+    vr_warn(adev_to_amd_private(adev)->vdev,
+            "psp not working for mode1 reset\n");
+    return ret;
+  }
+
+  /* send mode 1 reset command to PSP */
+  WREG32(offset, GFX_CTRL_CMD_ID_MODE1_RST);
+  msleep(500);
+
+  /* check if PSP came back */
+  offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_33);
+  ret = psp_wait_for(adev, offset, 0x80000000, 0x80000000, false);
+
+  if (ret) {
+    vr_warn(adev_to_amd_private(adev)->vdev,
+            "psp mode1 reset completed but PSP not responding\n");
+    return ret;
+  }
+
+  vr_info(adev_to_amd_private(adev)->vdev,
+          "psp mode1 reset succeeded\n");
+
+  return 0;
+}
+
 static int amd_vega10_reset(struct vendor_reset_dev *dev)
 {
   struct amd_vendor_private *priv = amd_private(dev);
@@ -147,13 +183,6 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
   {
     vr_err(dev, "amdgpu_get_bios failed: %d\n", ret);
     ret = -ENOTSUPP;
-    goto free_adev;
-  }
-
-  ret = atom_bios_init(adev);
-  if (ret)
-  {
-    vr_err(dev, "atom_bios_init failed: %d\n", ret);
     goto free_adev;
   }
 
@@ -182,6 +211,23 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
       smu_resp, sol, mp1_intr ? "yes" : "no",
       psp_bl_ready ? "yes" : "no",
       baco_state == BACO_STATE_IN ? "on" : "off");
+
+  /* Try PSP Mode 1 Reset first. Preferred when the SMU is unresponsive */
+  ret = amd_vega10_mode1_reset(adev);
+  if (!ret)
+  {
+    vr_info(dev, "mode1 reset succeeded, skipping BACO\n");
+    goto free_adev;
+  }
+
+  vr_info(dev, "mode1 reset failed, falling back to BACO\n");
+
+  ret = atom_bios_init(adev);
+  if (ret)
+  {
+    vr_err(dev, "atom_bios_init failed: %d\n", ret);
+    goto free_adev;
+  }
 
   if (sol == ~1L && baco_state != BACO_STATE_IN)
   {
