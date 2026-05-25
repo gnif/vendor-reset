@@ -96,6 +96,11 @@ static const struct soc15_baco_cmd_entry clean_baco_tbl[] = {
 
 int vega10_baco_set_state(struct amd_fake_dev *adev, enum BACO_STATE state)
 {
+  enum BACO_STATE cur_state;
+
+  smu9_baco_get_state(adev, &cur_state);
+  if (cur_state == state)
+    return 0;
 
   if (state == BACO_STATE_IN)
   {
