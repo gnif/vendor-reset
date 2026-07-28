@@ -49,7 +49,7 @@ long vendor_reset_dev_locked(const struct vendor_reset_cfg *cfg,
     .pdev = dev,
     .info = cfg->info
   };
-  int ret;
+  int ret, post_ret;
 
   vr_info(&vdev, "version %d.%d\n",
       cfg->ops->version.major,
@@ -72,7 +72,13 @@ long vendor_reset_dev_locked(const struct vendor_reset_cfg *cfg,
   if (cfg->ops->post_reset)
   {
     vr_info(&vdev, "performing post-reset\n");
-    ret = cfg->ops->post_reset(&vdev);
+    post_ret = cfg->ops->post_reset(&vdev);
+    if (post_ret)
+    {
+      vr_warn(&vdev, "post-reset cleanup failed\n");
+      if (!ret)
+        ret = post_ret;
+    }
   }
 
   vr_info(&vdev, "reset result = %d\n", ret);

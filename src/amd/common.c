@@ -21,6 +21,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <linux/printk.h>
+#include "amd.h"
 #include "vendor-reset-dev.h"
 #include "soc15_common.h"
 #include "soc15.h"
@@ -132,8 +133,8 @@ int amd_common_post_reset(struct vendor_reset_dev *dev)
     priv->audio_pdev = NULL;
   }
 
-  /* don't try to go to low power if reset failed */
-  if (!dev->reset_ret)
+  /* Keep Vega10 in D0 after reset. */
+  if (!dev->reset_ret && dev->info != AMD_VEGA10)
     pci_set_power_state(pdev, PCI_D3hot);
 
   kfree(priv);
