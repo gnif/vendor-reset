@@ -200,6 +200,20 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     udelay(1);
   }
 
+  if (sol == 0xFFFFFFFFU)
+  {
+    vr_err(dev, "card is off bus (SOL register reads all ones)\n");
+    ret = -ENODEV;
+    goto free_adev;
+  }
+
+  if (!sol)
+  {
+    vr_info(dev, "card already reset without subsequent POST\n");
+    ret = 0;
+    goto free_adev;
+  }
+
   vr_info(dev, "bus reset disabled? %s\n", (dev->pdev->dev_flags & PCI_DEV_FLAGS_NO_BUS_RESET) ? "yes" : "no");
 
   /* collect some info for logging for now */
@@ -233,17 +247,6 @@ static int amd_vega10_reset(struct vendor_reset_dev *dev)
     vr_err(dev, "atom_bios_init failed: %d\n", ret);
     goto free_adev;
   }
-
-  if (sol == ~1L && baco_state != BACO_STATE_IN)
-  {
-    vr_warn(dev, "timed out waiting for SOL to be valid\n");
-    ret = -EINVAL;
-    goto free_adev;
-  }
-
-  /* if there's no sign of life we usually can't reset */
-  if (!sol)
-    goto free_adev;
 
   /* disable smu features */
   ret = smum_send_msg_to_smc_with_parameter(adev, PPSMC_MSG_GetEnabledSmuFeatures, 0, &features_mask);
