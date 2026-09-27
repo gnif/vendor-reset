@@ -1,0 +1,7 @@
+modname='vendor-reset'
+modver='0.1.1'
+built_modules='vendor-reset.ko'
+
+build() {
+    make $MAKEFLAGS "KDIR=$kernel_srcdir"
+}
