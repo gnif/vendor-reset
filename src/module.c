@@ -53,4 +53,5 @@ module_exit(vendor_reset_exit);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Geoffrey McRae <geoff@hostfission.com>");
 MODULE_AUTHOR("Adam Madsen <adam@ajmadsen.com>");
+MODULE_DESCRIPTION("Linux kernel vendor specific hardware reset module");
 MODULE_VERSION("0.1.1");
