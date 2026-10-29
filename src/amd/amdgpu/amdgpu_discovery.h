@@ -31,6 +31,9 @@
 
 void amdgpu_discovery_fini(struct amd_fake_dev *adev);
 int amdgpu_discovery_reg_base_init(struct amd_fake_dev *adev);
+int amdgpu_discovery_get_reg_base(struct amd_fake_dev *adev, int hw_id,
+                                  unsigned int base_index, uint32_t *base,
+                                  uint32_t *version);
 int amdgpu_discovery_get_ip_version(struct amd_fake_dev *adev, int hw_id,
                                     int *major, int *minor, int *revision);
 int amdgpu_discovery_get_gfx_info(struct amd_fake_dev *adev);

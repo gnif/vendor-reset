@@ -134,8 +134,17 @@ static int hw_id_map[MAX_HWIP] = {
 
 static int amdgpu_discovery_read_binary(struct amd_fake_dev *adev, uint8_t *binary)
 {
-	uint64_t vram_size = (uint64_t)RREG32(mmRCC_CONFIG_MEMSIZE) << 20;
-	uint64_t pos = vram_size - DISCOVERY_TMR_OFFSET;
+	uint32_t memsize = RREG32(mmRCC_CONFIG_MEMSIZE);
+	uint64_t vram_size;
+	uint64_t pos;
+
+	if (!memsize || memsize == 0xffffffff) {
+		DRM_ERROR("invalid VRAM size for ip discovery: 0x%x\n", memsize);
+		return -EINVAL;
+	}
+
+	vram_size = (uint64_t)memsize << 20;
+	pos = vram_size - DISCOVERY_TMR_OFFSET;
 
 	amdgpu_device_vram_access(adev, pos, (uint32_t *)binary,
 				  adev->mman.discovery_tmr_size, false);
@@ -145,7 +154,7 @@ static int amdgpu_discovery_read_binary(struct amd_fake_dev *adev, uint8_t *bina
 static uint16_t amdgpu_discovery_calculate_checksum(uint8_t *data, uint32_t size)
 {
 	uint16_t checksum = 0;
-	int i;
+	uint32_t i;
 
 	for (i = 0; i < size; i++)
 		checksum += data[i];
@@ -159,7 +168,7 @@ static inline bool amdgpu_discovery_verify_checksum(uint8_t *data, uint32_t size
 	return !!(amdgpu_discovery_calculate_checksum(data, size) == expected);
 }
 
-static int amdgpu_discovery_init(struct amd_fake_dev *adev)
+static int amdgpu_discovery_init(struct amd_fake_dev *adev, unsigned int tmr_size)
 {
 	struct table_info *info;
 	struct binary_header *bhdr;
@@ -170,7 +179,7 @@ static int amdgpu_discovery_init(struct amd_fake_dev *adev)
 	uint16_t checksum;
 	int r;
 
-	adev->mman.discovery_tmr_size = DISCOVERY_TMR_SIZE;
+	adev->mman.discovery_tmr_size = tmr_size;
 	adev->mman.discovery_bin = kzalloc(adev->mman.discovery_tmr_size, GFP_KERNEL);
 	if (!adev->mman.discovery_bin)
 		return -ENOMEM;
@@ -191,8 +200,14 @@ static int amdgpu_discovery_init(struct amd_fake_dev *adev)
 
 	offset = offsetof(struct binary_header, binary_checksum) +
 		sizeof(bhdr->binary_checksum);
-	size = bhdr->binary_size - offset;
-	checksum = bhdr->binary_checksum;
+	if (le16_to_cpu(bhdr->binary_size) < sizeof(*bhdr) ||
+	    le16_to_cpu(bhdr->binary_size) > adev->mman.discovery_tmr_size) {
+		DRM_ERROR("invalid ip discovery binary size\n");
+		r = -EINVAL;
+		goto out;
+	}
+	size = le16_to_cpu(bhdr->binary_size) - offset;
+	checksum = le16_to_cpu(bhdr->binary_checksum);
 
 	if (!amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
 					      size, checksum)) {
@@ -204,6 +219,15 @@ static int amdgpu_discovery_init(struct amd_fake_dev *adev)
 	info = &bhdr->table_list[IP_DISCOVERY];
 	offset = le16_to_cpu(info->offset);
 	checksum = le16_to_cpu(info->checksum);
+	size = le16_to_cpu(info->size);
+	if (offset < sizeof(*bhdr) ||
+	    size < sizeof(*ihdr) ||
+	    offset > le16_to_cpu(bhdr->binary_size) ||
+	    size > le16_to_cpu(bhdr->binary_size) - offset) {
+		DRM_ERROR("invalid ip discovery table bounds\n");
+		r = -EINVAL;
+		goto out;
+	}
 	ihdr = (struct ip_discovery_header *)(adev->mman.discovery_bin + offset);
 
 	if (le32_to_cpu(ihdr->signature) != DISCOVERY_TABLE_SIGNATURE) {
@@ -212,8 +236,9 @@ static int amdgpu_discovery_init(struct amd_fake_dev *adev)
 		goto out;
 	}
 
-	if (!amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
-					      ihdr->size, checksum)) {
+	if (le16_to_cpu(ihdr->size) != size ||
+	    !amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
+					      size, checksum)) {
 		DRM_ERROR("invalid ip discovery data table checksum\n");
 		r = -EINVAL;
 		goto out;
@@ -222,10 +247,20 @@ static int amdgpu_discovery_init(struct amd_fake_dev *adev)
 	info = &bhdr->table_list[GC];
 	offset = le16_to_cpu(info->offset);
 	checksum = le16_to_cpu(info->checksum);
+	size = le16_to_cpu(info->size);
+	if (offset < sizeof(*bhdr) ||
+	    size < sizeof(*ghdr) ||
+	    offset > le16_to_cpu(bhdr->binary_size) ||
+	    size > le16_to_cpu(bhdr->binary_size) - offset) {
+		DRM_ERROR("invalid gc data table bounds\n");
+		r = -EINVAL;
+		goto out;
+	}
 	ghdr = (struct gpu_info_header *)(adev->mman.discovery_bin + offset);
 
-	if (!amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
-				              ghdr->size, checksum)) {
+	if (le32_to_cpu(ghdr->size) != size ||
+	    !amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
+				              size, checksum)) {
 		DRM_ERROR("invalid gc data table checksum\n");
 		r = -EINVAL;
 		goto out;
@@ -246,6 +281,86 @@ void amdgpu_discovery_fini(struct amd_fake_dev *adev)
 	adev->mman.discovery_bin = NULL;
 }
 
+int amdgpu_discovery_get_reg_base(struct amd_fake_dev *adev, int hw_id,
+				  unsigned int base_index, uint32_t *base,
+				  uint32_t *version)
+{
+	struct binary_header *bhdr;
+	struct ip_discovery_header *ihdr;
+	uint8_t *binary;
+	size_t start, end, offset, stride, entry_size;
+	unsigned int i, j, num_dies;
+	bool addresses_64;
+	int r;
+
+	if (!adev->mman.discovery_bin) {
+		r = amdgpu_discovery_init(adev, 10 << 10);
+		if (r)
+			return r;
+	}
+
+	binary = adev->mman.discovery_bin;
+	bhdr = (struct binary_header *)binary;
+	start = le16_to_cpu(bhdr->table_list[IP_DISCOVERY].offset);
+	ihdr = (struct ip_discovery_header *)(binary + start);
+	end = start + le16_to_cpu(ihdr->size);
+	num_dies = le16_to_cpu(ihdr->num_dies);
+	if (!num_dies || num_dies > ARRAY_SIZE(ihdr->die_info) ||
+	    !le16_to_cpu(ihdr->version) || le16_to_cpu(ihdr->version) > 4)
+		goto invalid;
+
+	addresses_64 = le16_to_cpu(ihdr->version) == 4 &&
+		       (le16_to_cpu(ihdr->padding[0]) & 1);
+	stride = addresses_64 ? sizeof(uint64_t) : sizeof(uint32_t);
+	for (i = 0; i < num_dies; i++) {
+		struct die_header *dhdr;
+
+		offset = le16_to_cpu(ihdr->die_info[i].die_offset);
+		if (offset < start + sizeof(*ihdr) ||
+		    offset > end || sizeof(*dhdr) > end - offset)
+			goto invalid;
+		dhdr = (struct die_header *)(binary + offset);
+		if (le16_to_cpu(dhdr->die_id) != le16_to_cpu(ihdr->die_info[i].die_id))
+			goto invalid;
+		offset += sizeof(*dhdr);
+		for (j = 0; j < le16_to_cpu(dhdr->num_ips); j++) {
+			struct ip *ip;
+
+			if (offset > end || offsetof(struct ip, base_address) > end - offset)
+				goto invalid;
+			ip = (struct ip *)(binary + offset);
+			entry_size = offsetof(struct ip, base_address) +
+				     stride * ip->num_base_address;
+			if (!ip->num_base_address || entry_size > end - offset)
+				goto invalid;
+			if (le16_to_cpu(ip->hw_id) == hw_id && !ip->number_instance) {
+				if (base_index >= ip->num_base_address)
+					goto invalid;
+				if (addresses_64) {
+					uint64_t address;
+
+					memcpy(&address, binary + offset +
+					       offsetof(struct ip, base_address) +
+					       stride * base_index, sizeof(address));
+					*base = le64_to_cpu(address) & 0x3fffffff;
+				} else {
+					*base = le32_to_cpu(ip->base_address[base_index]);
+				}
+				*version = (ip->major << 16) | (ip->minor << 8) | ip->revision;
+				return 0;
+			}
+			offset += entry_size;
+		}
+	}
+
+	DRM_ERROR("ip discovery missing hardware IP %d instance 0\n", hw_id);
+	return -ENODEV;
+
+invalid:
+	DRM_ERROR("invalid ip discovery entry for hardware IP %d\n", hw_id);
+	return -EINVAL;
+}
+
 int amdgpu_discovery_reg_base_init(struct amd_fake_dev *adev)
 {
 	struct binary_header *bhdr;
@@ -261,7 +376,7 @@ int amdgpu_discovery_reg_base_init(struct amd_fake_dev *adev)
 	int i, j, k;
 	int r;
 
-	r = amdgpu_discovery_init(adev);
+	r = amdgpu_discovery_init(adev, DISCOVERY_TMR_SIZE);
 	if (r) {
 		DRM_ERROR("amdgpu_discovery_init failed\n");
 		return r;

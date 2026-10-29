@@ -66,6 +66,33 @@ updating your initrd.
 |AMD|Navi 12| Pro 5600M |
 |AMD|Navi 14| Pro 5300, RX 5300, 5500XT
 
+### Experimental Navi48 support
+
+Navi48 (`1002:7550`) has a separate SMU 14 mode1 reset handler. It does not
+reuse the Navi10 reset sequence. The handler follows the debug-mailbox
+sequence in Linux v6.16's
+[smu_v14_0_2_ppt.c](https://github.com/torvalds/linux/blob/v6.16/drivers/gpu/drm/amd/pm/swsmu/smu14/smu_v14_0_2_ppt.c)
+and checks PSP bootloader readiness before reporting success.
+
+The bundled [udev rules](udev/99-vendor-reset.rules) include `1002:7550`
+to load the module and select `device_specific` on Linux kernels 5.15+.
+
+This implementation has not been validated on Navi48 hardware. A Linux
+kernel build and repeated VFIO guest start/stop/reset cycles on the actual
+card are required before treating it as supported. macOS cannot build or
+load this Linux kernel module natively.
+
+The handler requires valid VRAM IP-discovery data, SMU/PSP version 14.0.2
+or 14.0.3, and MMIO-accessible reset registers. Missing or unsupported
+discovery data and reset timeouts are reported as errors; the handler
+does not fall back to Navi10 register offsets. Do not use it while the
+GPU is bound to `amdgpu`.
+
+The reset sequence and discovery parser can be tested with
+`make -C tests check` using a C compiler with AddressSanitizer and
+UndefinedBehaviorSanitizer. These host-side tests use simulated PCI/MMIO
+access and can run on macOS; they are not a Linux kernel build or a hardware test.
+
 ## Developing
 
 If you are a vendor intending to add support for your device to this project
@@ -77,4 +104,3 @@ please first consider two things:
    (see: kernel/drivers/pci/quirk.c)?
 
 If you answer yes to either of these questions this project is not for you.
-

@@ -106,6 +106,9 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #define _AMD_ARCTURUS(op) \
     {PCI_VENDOR_ID_ATI, 0x738c, op, DEVICE_INFO(AMD_VEGA20)} //Instinct MI100
 
+#define _AMD_NAVI48(op) \
+    {PCI_VENDOR_ID_ATI, 0x7550, op, DEVICE_INFO(AMD_NAVI48)}
+
 static const struct vendor_reset_cfg vendor_reset_devices[] = {
     _AMD_POLARIS10(&amd_polaris10_ops),
     _AMD_POLARIS11(&amd_polaris10_ops),
@@ -116,6 +119,7 @@ static const struct vendor_reset_cfg vendor_reset_devices[] = {
     _AMD_NAVI14(&amd_navi10_ops),
     _AMD_NAVI12(&amd_navi10_ops),
     _AMD_ARCTURUS(&amd_vega20_ops),
+    _AMD_NAVI48(&amd_navi48_ops),
 
     /* end of array guard */
     {.vendor = 0}
